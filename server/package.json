@@ -13,17 +13,23 @@
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "latest",
+    "@types/express": "latest",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/mongoose": "latest",
     "@types/node": "^22.15.2",
     "nodemon": "^3.0.2",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.3",
-    "@types/express": "latest",
-    "@types/cors": "latest",
-    "@types/mongoose": "latest"
+    "typescript": "^5.8.3"
   },
   "dependencies": {
-    "express": "latest",
+    "bcryptjs": "^3.0.3",
     "cors": "latest",
-    "mongoose": "latest"
+    "dotenv": "^17.4.2",
+    "express": "latest",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "latest",
+    "winston": "^3.19.0"
   }
 }
