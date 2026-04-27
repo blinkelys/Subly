@@ -24,7 +24,6 @@ router.post("/login", async (req: Request, res: Response, next: NextFunction) =>
 
     req.session.userId = user._id;
 
-    // 👇 KEY PART: control session duration
     if (rememberMe) {
       req.session.cookie.maxAge = 1000 * 60 * 60 * 24 * 30;
     } else {
@@ -49,29 +48,50 @@ router.post("/login", async (req: Request, res: Response, next: NextFunction) =>
   }
 });
 
-router.post("/register", async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { username, email, password } = req.body;
+router.post(
+  "/register",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { username, email, password } = req.body;
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: "Email already in use" });
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({ message: "Email already in use" });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      const newUser = new User({
+        username,
+        email,
+        password: hashedPassword,
+        role: "user",
+      });
+
+      await newUser.save();
+
+      req.session.userId = newUser._id;
+
+      req.session.cookie.maxAge = 1000 * 60 * 60 * 2;
+
+      req.session.save((err) => {
+        if (err) return next(err);
+
+        return res.status(201).json({
+          message: "Registration successful",
+          user: {
+            id: newUser._id,
+            username: newUser.username,
+            email: newUser.email,
+            role: newUser.role,
+          },
+        });
+      });
+    } catch (error) {
+      next(error);
     }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const newUser = new User({
-      username,
-      email,
-      password: hashedPassword,
-      role: "user",
-    });
-    await newUser.save();
-    res.status(201).json({ message: "Registration successful" });
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 router.post(
   "/logout",

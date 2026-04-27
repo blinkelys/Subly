@@ -61,10 +61,10 @@ const handleRegister = async () => {
       password: password.value
     })
 
-    success.value = 'Account created successfully! Redirecting to login...'
+    success.value = 'Account created successfully! Redirecting...'
     setTimeout(() => {
-      router.push('/login')
-    }, 2000)
+      router.push('/dashboard')
+    }, 1000)
   } catch (err: any) {
     error.value = err.response?.data?.message || 'Registration failed. Please try again.'
   } finally {
