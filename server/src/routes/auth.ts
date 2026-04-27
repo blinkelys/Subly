@@ -105,49 +105,42 @@ router.delete(
   },
 );
 
-router.post(
-  "/login",
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { emailOrUsername, password } = req.body;
+router.post("/login", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { emailOrUsername, password } = req.body;
 
-      // Find user by email or username
-      const adminUser = await User.findOne({
-        role: "admin",
-        $or: [{ email: emailOrUsername }, { username: emailOrUsername }],
-      });
+    const user = await User.findOne({
+      $or: [{ email: emailOrUsername }, { username: emailOrUsername }],
+    });
 
-      if (!adminUser) {
-        return res.status(401).json({ message: "Authentication failed" });
-      }
-
-      const isPasswordValid = await bcrypt.compare(
-        password,
-        adminUser.password,
-      );
-      if (!isPasswordValid) {
-        return res.status(401).json({ message: "Authentication failed" });
-      }
-
-      req.session.userId = adminUser._id;
-
-      // Explicitly save session before sending response
-      req.session.save((err) => {
-        if (err) {
-          return next(err);
-        }
-        res
-          .status(200)
-          .json({
-            message: "Login successful",
-            user: { username: adminUser.username, email: adminUser.email },
-          });
-      });
-    } catch (error) {
-      next(error);
+    if (!user) {
+      return res.status(401).json({ message: "Authentication failed" });
     }
-  },
-);
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Authentication failed" });
+    }
+
+    req.session.userId = user._id;
+
+    req.session.save((err) => {
+      if (err) return next(err);
+
+      res.status(200).json({
+        message: "Login successful",
+        user: {
+          id: user._id,
+          username: user.username,
+          email: user.email,
+          role: user.role, // 👈 important
+        },
+      });
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 
 router.post("/register", async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -194,14 +187,14 @@ router.get("/me", async (req: Request, res: Response, next: NextFunction) => {
     if (!req.session.userId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
-    const adminUser = await User.findOne({
-      _id: req.session.userId,
-      role: "admin",
-    }).select("-password");
-    if (!adminUser) {
-      return res.status(404).json({ message: "Admin user not found" });
+
+    const user = await User.findById(req.session.userId).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
-    res.status(200).json(adminUser);
+
+    res.status(200).json(user);
   } catch (error) {
     next(error);
   }

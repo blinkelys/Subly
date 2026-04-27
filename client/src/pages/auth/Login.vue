@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import api from '../../api'
 
 const router = useRouter()
-const email = ref('')
+const emailOrUsername = ref('')
 const password = ref('')
 const rememberMe = ref(false)
 const isLoading = ref(false)
@@ -12,7 +12,7 @@ const error = ref('')
 const showPassword = ref(false)
 
 const handleLogin = async () => {
-  if (!email.value || !password.value) {
+  if (!emailOrUsername.value || !password.value) {
     error.value = 'Please fill in all fields'
     return
   }
@@ -22,12 +22,9 @@ const handleLogin = async () => {
 
   try {
     const response = await api.post('/auth/login', {
-      email: email.value,
+      emailOrUsername: emailOrUsername.value,
       password: password.value
     })
-
-    // Store token
-    localStorage.setItem('token', response.data.token)
 
     // Redirect to dashboard
     router.push('/dashboard')
@@ -71,15 +68,15 @@ const handleSignUp = () => {
 
       <!-- Form -->
       <form @submit.prevent="handleLogin" class="space-y-6">
-        <!-- Email Field -->
+        <!-- Email or Username Field -->
         <div class="space-y-2">
           <label for="email" class="block text-sm font-medium text-gray-300">
-            Email address
+            Email or Username
           </label>
           <input
-            v-model="email"
-            type="email"
-            id="email"
+            v-model="emailOrUsername"
+            type="text"
+            id="emailOrUsername"
             placeholder="you@example.com"
             class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition duration-200"
             required

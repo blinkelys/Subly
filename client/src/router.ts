@@ -25,7 +25,7 @@ const router = createRouter({
 router.beforeEach(async (to, _from, next) => {
   if (to.meta.requiresAuth) {
     try {
-      await api.get("/api/auth/me");
+      await api.get("/auth/me");
       next();
     } catch (error) {
       next("/login");

@@ -1,11 +1,11 @@
 import { Router } from 'express'
 import Subscription from '../models/Subscription'
-import { isAuthorized } from '../middleware/auth'
+import { isAuthenticated } from '../middleware/auth'
 
 const router = Router()
 
 // GET all subscriptions
-router.get('/', isAuthorized, async (req: any, res) => {
+router.get('/', isAuthenticated, async (req: any, res) => {
   try {
     const subs = await Subscription.find({
       userId: req.user.id,
@@ -18,7 +18,7 @@ router.get('/', isAuthorized, async (req: any, res) => {
 })
 
 // CREATE subscription
-router.post('/', isAuthorized, async (req: any, res) => {
+router.post('/', isAuthenticated, async (req: any, res) => {
   try {
     const { name, price, renewalDate } = req.body
 
@@ -37,7 +37,7 @@ router.post('/', isAuthorized, async (req: any, res) => {
 })
 
 // UPDATE subscription
-router.put('/:id', isAuthorized, async (req: any, res) => {
+router.put('/:id', isAuthenticated, async (req: any, res) => {
   try {
     const updated = await Subscription.findOneAndUpdate(
       {
@@ -62,7 +62,7 @@ router.put('/:id', isAuthorized, async (req: any, res) => {
 })
 
 // DELETE subscription
-router.delete('/:id', isAuthorized, async (req: any, res) => {
+router.delete('/:id', isAuthenticated, async (req: any, res) => {
   try {
     const deleted = await Subscription.findOneAndDelete({
       _id: req.params.id,
@@ -78,7 +78,7 @@ router.delete('/:id', isAuthorized, async (req: any, res) => {
 })
 
 // END subscription (your PATCH /end route)
-router.patch('/:id/end', isAuthorized, async (req: any, res) => {
+router.patch('/:id/end', isAuthenticated, async (req: any, res) => {
   try {
     const updated = await Subscription.findOneAndUpdate(
       {
