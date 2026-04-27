@@ -5,7 +5,7 @@ import Login from './pages/auth/Login.vue'
 import Register from './pages/auth/Register.vue'
 import Recover from './pages/auth/Recover.vue'
 import Dashboard from './pages/Dashboard.vue'
-import axios from "axios";
+import api from "./api";
 
 const routes = [
   { path: '/', component: Home },
@@ -25,7 +25,7 @@ const router = createRouter({
 router.beforeEach(async (to, _from, next) => {
   if (to.meta.requiresAuth) {
     try {
-      await axios.get("/api/auth/me", { withCredentials: true });
+      await api.get("/api/auth/me");
       next();
     } catch (error) {
       next("/login");
