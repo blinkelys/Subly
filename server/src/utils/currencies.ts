@@ -16,36 +16,45 @@ export const SUPPORTED_CURRENCIES = {
   MXN: { name: "Mexican Peso", symbol: "$", country: "MX" },
   BRL: { name: "Brazilian Real", symbol: "R$", country: "BR" },
   SGD: { name: "Singapore Dollar", symbol: "S$", country: "SG" },
+  NOK: { name: "Norwegian Krone", symbol: "kr", country: "NO" },
+  SEK: { name: "Swedish Krona", symbol: "kr", country: "SE" },
+  DKK: { name: "Danish Krone", symbol: "kr", country: "DK" },
 }
 
 // Exchange rates relative to USD (base currency)
 export const EXCHANGE_RATES: Record<string, number> = {
-  USD: 1,
-  EUR: 0.92,
-  GBP: 0.79,
-  JPY: 149.5,
-  CAD: 1.36,
-  AUD: 1.53,
-  CHF: 0.88,
-  INR: 83.12,
-  MXN: 17.05,
-  BRL: 4.97,
-  SGD: 1.35,
+    USD: 1,
+    EUR: 0.92,
+    GBP: 0.79,
+    JPY: 149.5,
+    CAD: 1.36,
+    AUD: 1.53,
+    CHF: 0.88,
+    INR: 83.12,
+    MXN: 17.05,
+    BRL: 4.97,
+    SGD: 1.35,
+    NOK: 10.5,
+    SEK: 10.5,
+    DKK: 10.5,
 }
 
 // Determine decimal places for each currency
 export const CURRENCY_DECIMALS: Record<string, number> = {
-  USD: 2,
-  EUR: 2,
-  GBP: 2,
-  JPY: 0, // Yen doesn't use decimals
-  CAD: 2,
-  AUD: 2,
-  CHF: 2,
-  INR: 2,
-  MXN: 2,
-  BRL: 2,
-  SGD: 2,
+    USD: 2,
+    EUR: 2,
+    GBP: 2,
+    JPY: 0, 
+    CAD: 2,
+    AUD: 2,
+    CHF: 2,
+    INR: 2,
+    MXN: 2,
+    BRL: 2,
+    SGD: 2,
+    NOK: 2,
+    SEK: 2,
+    DKK: 2,
 }
 
 /**
