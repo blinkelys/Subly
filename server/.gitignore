@@ -1,0 +1,14 @@
+node_modules/
+.env
+dist/
+logs/
+*.log
+
+.DS_Store
+.vscode/
+
+package-lock.json
+yarn.lock
+
+./deploy.sh
+uploads/
