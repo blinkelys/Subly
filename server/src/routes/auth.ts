@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express'
-import jwt, { type SignOptions } from 'jsonwebtoken'
+import jwt from 'jsonwebtoken'
 import User from '../models/User'
 import logger from '../utils/logger'
 
@@ -7,11 +7,10 @@ const router = Router()
 
 // Helper function to generate JWT
 const generateToken = (userId: string): string => {
-  const secret = (process.env.JWT_SECRET || 'secret') as string
-  const expiresIn = (process.env.JWT_EXPIRES_IN || '7d') as string
+  const secret = process.env.JWT_SECRET || 'secret'
+  const expiresIn = process.env.JWT_EXPIRES_IN || '7d'
   
-  const options: SignOptions = { expiresIn }
-  return jwt.sign({ id: userId }, secret, options)
+  return jwt.sign({ id: userId }, secret, { expiresIn } as any)
 }
 
 // Register endpoint
@@ -155,11 +154,11 @@ router.post('/recover', async (req: Request, res: Response) => {
     }
 
     // Generate recovery token (valid for 1 hour)
-    const secret = (process.env.JWT_SECRET || 'secret') as string
+    const secret = process.env.JWT_SECRET || 'secret'
     const recoveryToken = jwt.sign(
       { id: user._id },
       secret,
-      { expiresIn: '1h' }
+      { expiresIn: '1h' } as any
     )
 
     logger.info(`Recovery email sent for: ${email}`)
@@ -204,7 +203,7 @@ router.post('/reset-password', async (req: Request, res: Response) => {
     // Verify token
     let decoded: any
     try {
-      const secret = (process.env.JWT_SECRET || 'secret') as string
+      const secret = process.env.JWT_SECRET || 'secret'
       decoded = jwt.verify(token, secret)
     } catch (error) {
       logger.warn('Invalid or expired recovery token')

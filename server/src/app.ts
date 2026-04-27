@@ -35,9 +35,6 @@ const corsOptions = {
 
 app.use(cors(corsOptions))
 
-// Preflight requests
-app.options('*', cors(corsOptions))
-
 logger.info(`CORS enabled for: ${process.env.CORS_ORIGIN || 'http://localhost:5173'}`)
 
 // ============= ROUTES =============
