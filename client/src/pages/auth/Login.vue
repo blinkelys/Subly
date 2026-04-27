@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import apiClient from '../../api/client'
+import api from '../../api'
 
 const router = useRouter()
 const email = ref('')
@@ -21,7 +21,7 @@ const handleLogin = async () => {
   error.value = ''
 
   try {
-    const response = await apiClient.post('/auth/login', {
+    const response = await api.post('/auth/login', {
       email: email.value,
       password: password.value
     })

@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import apiClient from '../../api/client'
+import api from '../../api'
 
 const router = useRouter()
 const email = ref('')
+const username = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 const agreeToTerms = ref(false)
@@ -15,8 +16,13 @@ const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 
 const validateForm = () => {
-  if (!email.value || !password.value || !confirmPassword.value) {
+  if (!username.value || !email.value || !password.value || !confirmPassword.value) {
     error.value = 'Please fill in all fields'
+    return false
+  }
+
+  if (username.value.length < 3) {
+    error.value = 'Username must be at least 3 characters long'
     return false
   }
 
@@ -49,7 +55,8 @@ const handleRegister = async () => {
   isLoading.value = true
 
   try {
-    await apiClient.post('/auth/register', {
+    await api.post('/auth/register', {
+      username: username.value,
       email: email.value,
       password: password.value
     })
@@ -112,6 +119,21 @@ const handleLogin = () => {
             type="email"
             id="email"
             placeholder="you@example.com"
+            class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition duration-200"
+            required
+          />
+        </div>
+
+        <!-- Username Field -->
+        <div class="space-y-2">
+          <label for="username" class="block text-sm font-medium text-gray-300">
+            Username
+          </label>
+          <input
+            v-model="username"
+            type="text"
+            id="username"
+            placeholder="yourname"
             class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition duration-200"
             required
           />

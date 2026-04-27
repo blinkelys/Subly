@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import apiClient from '../../api/client'
+import api from '../../api'
 
 const router = useRouter()
 const email = ref('')
@@ -26,7 +26,7 @@ const handleEmailSubmit = async () => {
   success.value = ''
 
   try {
-    await apiClient.post('/auth/recover', {
+    await api.post('/auth/recover', {
       email: email.value
     })
 
@@ -71,7 +71,7 @@ const handlePasswordReset = async () => {
   isLoading.value = true
 
   try {
-    await apiClient.post('/auth/reset-password', {
+    await api.post('/auth/reset-password', {
       token: resetToken.value,
       password: newPassword.value
     })
