@@ -5,6 +5,8 @@ export interface IUser extends Document {
   email: string;
   password: string;
   role: string;
+  currency: string; // e.g., "USD", "EUR", "GBP"
+  country: string; // e.g., "US", "DE", "GB"
   createdAt: Date;
   updatedAt: Date;
 }
@@ -34,6 +36,16 @@ const userSchema = new Schema<IUser>(
       trim: true,
       default: "user",
       enum: ["user", "admin"],
+    },
+    currency: {
+      type: String,
+      default: "USD",
+      enum: ["USD", "EUR", "GBP", "JPY", "CAD", "AUD", "CHF", "INR", "MXN", "BRL", "SGD"],
+    },
+    country: {
+      type: String,
+      default: "US",
+      enum: ["US", "DE", "GB", "JP", "CA", "AU", "CH", "IN", "MX", "BR", "SG"],
     },
   },
   {

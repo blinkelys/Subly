@@ -1,5 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import api from '../api'
+import { useUser } from '../composables/useUser'
+import { formatPrice } from '../utils/currencies'
+
+const { currentUser, getCurrency } = useUser()
 
 type Subscription = {
   _id?: string
@@ -28,9 +33,7 @@ const form = ref<Subscription>({
   status: 'active',
 })
 
-/* ---------------- API ---------------- */
-
-import api from '../api'
+/* --------- Subscriptions API --------- */
 
 const fetchSubscriptions = async () => {
   const res = await api.get('/subscriptions')
@@ -134,7 +137,7 @@ onMounted(fetchSubscriptions)
           </span>
         </div>
 
-        <p class="text-gray-400">€{{ sub.price }} / month</p>
+        <p class="text-gray-400">{{ formatPrice(sub.price, getCurrency.value) }} / month</p>
         <p class="text-gray-500 text-sm">Payment: {{ sub.paymentDate }}</p>
 
         <div class="flex gap-2 pt-3">

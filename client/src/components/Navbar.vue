@@ -1,18 +1,29 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useUser } from '../composables/useUser'
+import api from '../api'
 
 const router = useRouter()
 const isMenuOpen = ref(false)
-const isAuthenticated = computed(() => !!localStorage.getItem('token'))
+const { currentUser, fetchCurrentUser } = useUser()
+
+onMounted(() => {
+  fetchCurrentUser()
+})
 
 const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value
 }
 
-const logout = () => {
-  localStorage.removeItem('token')
-  router.push('/login')
+const logout = async () => {
+  try {
+    await api.post('/auth/logout')
+    currentUser.value = null
+    router.push('/login')
+  } catch (error) {
+    console.error('Logout failed:', error)
+  }
 }
 </script>
 
@@ -46,7 +57,7 @@ const logout = () => {
       </div>
 
       <!-- Desktop Auth Buttons -->
-      <div v-if="!isAuthenticated" class="hidden md:flex items-center gap-4">
+      <div v-if="!currentUser" class="hidden md:flex items-center gap-4">
         <RouterLink
           to="/login"
           class="text-gray-400 hover:text-white transition-colors duration-200"
@@ -63,9 +74,18 @@ const logout = () => {
 
       <!-- User Menu -->
       <div v-else class="hidden md:flex items-center gap-4">
-        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-sm font-semibold cursor-pointer">
-          U
-        </div>
+        <RouterLink
+          to="/dashboard"
+          class="text-gray-400 hover:text-white transition-colors duration-200"
+        >
+          Dashboard
+        </RouterLink>
+        <RouterLink
+          to="/settings"
+          class="text-gray-400 hover:text-white transition-colors duration-200"
+        >
+          Settings
+        </RouterLink>
         <button
           @click="logout"
           class="px-6 py-2 rounded-lg border border-gray-700 text-gray-400 hover:text-white hover:border-red-500 transition-all duration-300"
@@ -125,7 +145,7 @@ const logout = () => {
           About
         </RouterLink>
 
-        <div v-if="!isAuthenticated" class="flex flex-col gap-3 pt-4 border-t border-gray-700">
+        <div v-if="!currentUser" class="flex flex-col gap-3 pt-4 border-t border-gray-700">
           <RouterLink
             to="/login"
             class="block text-gray-400 hover:text-white transition-colors duration-200"
@@ -143,6 +163,20 @@ const logout = () => {
         </div>
 
         <div v-else class="flex flex-col gap-3 pt-4 border-t border-gray-700">
+          <RouterLink
+            to="/dashboard"
+            class="block text-gray-400 hover:text-white transition-colors duration-200"
+            @click="isMenuOpen = false"
+          >
+            Dashboard
+          </RouterLink>
+          <RouterLink
+            to="/settings"
+            class="block text-gray-400 hover:text-white transition-colors duration-200"
+            @click="isMenuOpen = false"
+          >
+            Settings
+          </RouterLink>
           <button
             @click="logout"
             class="px-4 py-2 rounded-lg border border-gray-700 text-gray-400 hover:text-white hover:border-red-500 transition-all duration-300"

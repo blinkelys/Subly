@@ -5,6 +5,7 @@ import Login from './pages/auth/Login.vue'
 import Register from './pages/auth/Register.vue'
 import Recover from './pages/auth/Recover.vue'
 import Dashboard from './pages/Dashboard.vue'
+import Settings from './pages/Settings.vue'
 import api from "./api";
 
 const routes = [
@@ -13,7 +14,8 @@ const routes = [
   { path: '/login', component: Login },
   { path: '/register', component: Register },
   { path: '/recover', component: Recover },
-  { path: '/dashboard', component: Dashboard, meta: { requiresAuth: true }, }
+  { path: '/dashboard', component: Dashboard, meta: { requiresAuth: true }, },
+  { path: '/settings', component: Settings, meta: { requiresAuth: true }, }
 ]
 
 const router = createRouter({

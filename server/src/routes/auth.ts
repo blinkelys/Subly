@@ -1,6 +1,7 @@
 import express, { Router } from "express";
 import { Request, Response, NextFunction } from "express";
 import { User } from "../models/user";
+import { getSupportedCurrencies } from "../utils/currencies";
 import bcrypt from "bcrypt";
 
 const router = express.Router();
@@ -40,6 +41,8 @@ router.post("/login", async (req: Request, res: Response, next: NextFunction) =>
           username: user.username,
           email: user.email,
           role: user.role,
+          currency: user.currency,
+          country: user.country,
         },
       });
     });
@@ -66,6 +69,8 @@ router.post(
         email,
         password: hashedPassword,
         role: "user",
+        currency: "USD",
+        country: "US",
       });
 
       await newUser.save();
@@ -84,6 +89,8 @@ router.post(
             username: newUser.username,
             email: newUser.email,
             role: newUser.role,
+            currency: newUser.currency,
+            country: newUser.country,
           },
         });
       });
@@ -126,6 +133,48 @@ router.get("/me", async (req: Request, res: Response, next: NextFunction) => {
     next(error);
   }
 });
+
+router.put(
+  "/settings",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const { currency, country } = req.body;
+
+      const user = await User.findByIdAndUpdate(
+        req.session.userId,
+        { currency, country },
+        { new: true }
+      ).select("-password");
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.status(200).json({
+        message: "Settings updated successfully",
+        user,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+router.get(
+  "/currencies",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const currencies = getSupportedCurrencies();
+      res.status(200).json(currencies);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 async function generateAdmin() {
   try {
