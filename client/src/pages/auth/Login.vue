@@ -23,7 +23,8 @@ const handleLogin = async () => {
   try {
     const response = await api.post('/auth/login', {
       emailOrUsername: emailOrUsername.value,
-      password: password.value
+      password: password.value,
+      rememberMe: rememberMe.value
     })
 
     // Redirect to dashboard
