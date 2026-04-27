@@ -5,8 +5,8 @@ type Subscription = {
   _id?: string
   name: string
   price: number
-  renewalDate: string
-  status: 'active' | 'ended'
+  paymentDate: string
+  status: 'active' | 'ending' | 'ended'
 }
 
 const subscriptions = ref<Subscription[]>([])
@@ -24,7 +24,7 @@ const selected = ref<Subscription | null>(null)
 const form = ref<Subscription>({
   name: '',
   price: 0,
-  renewalDate: '',
+  paymentDate: '',
   status: 'active',
 })
 
@@ -50,12 +50,13 @@ const updateSubscription = async () => {
   closeModals()
 }
 
-const deleteSubscription = async () => {
-  if (!selected.value?._id) return
-  await api.delete(`/subscriptions/${selected.value._id}`)
-  await fetchSubscriptions()
-  closeModals()
-}
+// No hard delete anymore
+// const deleteSubscription = async () => {
+//   if (!selected.value?._id) return
+//   await api.delete(`/subscriptions/${selected.value._id}`)
+//   await fetchSubscriptions()
+//   closeModals()
+// }
 
 const endSubscription = async () => {
   if (!selected.value?._id) return
@@ -67,7 +68,7 @@ const endSubscription = async () => {
 /* ---------------- UI actions ---------------- */
 
 const openCreate = () => {
-  form.value = { name: '', price: 0, renewalDate: '', status: 'active' }
+  form.value = { name: '', price: 0, paymentDate: '', status: 'active' }
   showCreateModal.value = true
 }
 
@@ -123,26 +124,26 @@ onMounted(fetchSubscriptions)
           <h2 class="text-xl font-semibold">{{ sub.name }}</h2>
           <span
             class="text-xs px-2 py-1 rounded"
-            :class="sub.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'"
+            :class="{
+              'bg-green-500/20 text-green-400': sub.status === 'active',
+              'bg-yellow-500/20 text-yellow-400': sub.status === 'ending',
+              'bg-red-500/20 text-red-400': sub.status === 'ended',
+            }"
           >
             {{ sub.status }}
           </span>
         </div>
 
         <p class="text-gray-400">€{{ sub.price }} / month</p>
-        <p class="text-gray-500 text-sm">Renewal: {{ sub.renewalDate }}</p>
+        <p class="text-gray-500 text-sm">Payment: {{ sub.paymentDate }}</p>
 
         <div class="flex gap-2 pt-3">
           <button @click="openEdit(sub)" class="text-sm px-3 py-1 bg-gray-800 rounded hover:bg-gray-700">
             Edit
           </button>
 
-          <button @click="openEnd(sub)" class="text-sm px-3 py-1 bg-yellow-600/20 text-yellow-400 rounded hover:bg-yellow-600/30">
+          <button v-if="sub.status === 'active'" @click="openEnd(sub)" class="text-sm px-3 py-1 bg-yellow-600/20 text-yellow-400 rounded hover:bg-yellow-600/30">
             End
-          </button>
-
-          <button @click="openDelete(sub)" class="text-sm px-3 py-1 bg-red-600/20 text-red-400 rounded hover:bg-red-600/30">
-            Delete
           </button>
         </div>
       </div>
@@ -157,7 +158,7 @@ onMounted(fetchSubscriptions)
 
         <input v-model="form.name" placeholder="Name" class="w-full p-2 bg-gray-800 rounded" />
         <input v-model.number="form.price" type="number" placeholder="Price" class="w-full p-2 bg-gray-800 rounded" />
-        <input v-model="form.renewalDate" type="date" class="w-full p-2 bg-gray-800 rounded" />
+        <input v-model="form.paymentDate" type="date" class="w-full p-2 bg-gray-800 rounded" />
 
         <div class="flex justify-end gap-2 pt-4">
           <button @click="closeModals" class="px-4 py-2 bg-gray-700 rounded">Cancel</button>
@@ -172,17 +173,7 @@ onMounted(fetchSubscriptions)
       </div>
     </div>
 
-    <!-- DELETE MODAL -->
-    <div v-if="showDeleteModal" class="fixed inset-0 bg-black/70 flex items-center justify-center">
-      <div class="bg-gray-900 p-6 rounded-xl space-y-4">
-        <p>Delete this subscription?</p>
-
-        <div class="flex justify-end gap-2">
-          <button @click="closeModals" class="px-4 py-2 bg-gray-700 rounded">Cancel</button>
-          <button @click="deleteSubscription" class="px-4 py-2 bg-red-600 rounded">Delete</button>
-        </div>
-      </div>
-    </div>
+    <!-- DELETE MODAL removed: subscriptions are not deleted, only ended -->
 
     <!-- END MODAL -->
     <div v-if="showEndModal" class="fixed inset-0 bg-black/70 flex items-center justify-center">

@@ -8,7 +8,7 @@ const router = Router()
 router.get('/', isAuthenticated, async (req: any, res) => {
   try {
     const subs = await Subscription.find({
-      userId: req.user.id,
+      userId: req.session.userId,
     }).sort({ createdAt: -1 })
 
     res.json(subs)
@@ -20,13 +20,13 @@ router.get('/', isAuthenticated, async (req: any, res) => {
 // CREATE subscription
 router.post('/', isAuthenticated, async (req: any, res) => {
   try {
-    const { name, price, renewalDate } = req.body
+    const { name, price, paymentDate } = req.body
 
     const sub = await Subscription.create({
-      userId: req.user.id,
+      userId: req.session.userId,
       name,
       price,
-      renewalDate,
+      paymentDate,
       status: 'active',
     })
 
@@ -42,12 +42,12 @@ router.put('/:id', isAuthenticated, async (req: any, res) => {
     const updated = await Subscription.findOneAndUpdate(
       {
         _id: req.params.id,
-        userId: req.user.id, // 🔒 ownership check
+        userId: req.session.userId, //  ownership check
       },
       {
         name: req.body.name,
         price: req.body.price,
-        renewalDate: req.body.renewalDate,
+        paymentDate: req.body.paymentDate,
         status: req.body.status,
       },
       { new: true }
@@ -61,31 +61,18 @@ router.put('/:id', isAuthenticated, async (req: any, res) => {
   }
 })
 
-// DELETE subscription
-router.delete('/:id', isAuthenticated, async (req: any, res) => {
-  try {
-    const deleted = await Subscription.findOneAndDelete({
-      _id: req.params.id,
-      userId: req.user.id,
-    })
 
-    if (!deleted) return res.status(404).json({ error: 'Not found' })
+// No hard delete. Use PATCH /:id/end to flag as ending.
 
-    res.json({ success: true })
-  } catch {
-    res.status(500).json({ error: 'Failed to delete subscription' })
-  }
-})
-
-// END subscription (your PATCH /end route)
+// END subscription (flag as ending, not ended)
 router.patch('/:id/end', isAuthenticated, async (req: any, res) => {
   try {
     const updated = await Subscription.findOneAndUpdate(
       {
         _id: req.params.id,
-        userId: req.user.id,
+        userId: req.session.userId,
       },
-      { status: 'ended' },
+      { status: 'ending' },
       { new: true }
     )
 

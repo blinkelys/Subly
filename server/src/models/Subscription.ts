@@ -1,24 +1,24 @@
 import { Schema, model, Document, Types } from 'mongoose'
 
+
 export interface ISubscription extends Document {
   userId: Types.ObjectId
   name: string
   price: number
-  renewalDate: Date
-  status: 'active' | 'ended'
+  paymentDate: Date
+  status: 'active' | 'ending' | 'ended'
 }
+
 
 const subscriptionSchema = new Schema<ISubscription>(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-
     name: { type: String, required: true },
     price: { type: Number, required: true },
-    renewalDate: { type: Date, required: true },
-
+    paymentDate: { type: Date, required: true },
     status: {
       type: String,
-      enum: ['active', 'ended'],
+      enum: ['active', 'ending', 'ended'],
       default: 'active',
     },
   },
