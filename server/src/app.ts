@@ -6,8 +6,6 @@ import session from "express-session";
 
 dotenv.config();
 
-import authRoute from "./routes/auth";
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || "localhost";
@@ -60,7 +58,11 @@ mongoose
   .catch((error) => console.error("MongoDB connection error:", error));
 
 // Routes
+import authRoute from "./routes/auth";
+import subscriptionRoutes from './routes/subscriptions'
+
 app.use("/api/auth",  authRoute);
+app.use('/api/subscriptions', subscriptionRoutes)
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${HOST} ${PORT}`));
