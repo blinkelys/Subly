@@ -199,6 +199,50 @@ async function generateAdmin() {
   }
 }
 
+// Currency conversion endpoints
+router.get(
+  "/exchange-rates",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { getAllExchangeRates } = await import("../services/currencyService");
+      const rates = await getAllExchangeRates();
+      res.status(200).json({ rates, timestamp: new Date().toISOString() });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+router.post(
+  "/convert",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { amount, fromCurrency, toCurrency } = req.body;
+
+      if (!amount || !fromCurrency || !toCurrency) {
+        return res
+          .status(400)
+          .json({
+            message: "amount, fromCurrency, and toCurrency are required",
+          });
+      }
+
+      const { convertCurrency } = await import(
+        "../services/currencyService"
+      );
+      const converted = await convertCurrency(amount, fromCurrency, toCurrency);
+
+      res.status(200).json({
+        original: { amount, currency: fromCurrency },
+        converted: { amount: converted, currency: toCurrency },
+        rate: converted / amount,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 generateAdmin();
 
 export default router;

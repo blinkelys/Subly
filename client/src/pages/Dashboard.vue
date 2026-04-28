@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import api from '../api'
 import { useUser } from '../composables/useUser'
-import { formatPrice } from '../utils/currencies'
+import { useCurrency } from '../composables/useCurrency'
 
 const { currentUser, getCurrency } = useUser()
+const { convert, formatPrice, fetchExchangeRates } = useCurrency()
 
 type Subscription = {
   _id?: string
@@ -15,6 +16,8 @@ type Subscription = {
 }
 
 const subscriptions = ref<Subscription[]>([])
+const isLoadingRates = ref(false)
+const convertedPrices = ref<Record<string, number>>({})
 
 // Modals
 const showCreateModal = ref(false)
@@ -40,9 +43,34 @@ const fetchSubscriptions = async () => {
   subscriptions.value = res.data
 }
 
+const convertPrices = async () => {
+  isLoadingRates.value = true
+  try {
+    await fetchExchangeRates()
+    
+    // Convert each subscription price to user's currency
+    const currency = getCurrency.value
+    for (const sub of subscriptions.value) {
+      const convertedAmount = await convert(sub.price, 'USD', currency)
+      convertedPrices.value[sub._id || ''] = convertedAmount
+    }
+  } catch (error) {
+    console.error('Failed to convert prices:', error)
+  } finally {
+    isLoadingRates.value = false
+  }
+}
+
+const getDisplayPrice = (subscription: Subscription): string => {
+  const key = subscription._id || ''
+  const convertedPrice = convertedPrices.value[key] ?? subscription.price
+  return formatPrice(convertedPrice, getCurrency.value)
+}
+
 const createSubscription = async () => {
   await api.post('/subscriptions', form.value)
   await fetchSubscriptions()
+  await convertPrices()
   closeModals()
 }
 
@@ -50,21 +78,15 @@ const updateSubscription = async () => {
   if (!selected.value?._id) return
   await api.put(`/subscriptions/${selected.value._id}`, form.value)
   await fetchSubscriptions()
+  await convertPrices()
   closeModals()
 }
-
-// No hard delete anymore
-// const deleteSubscription = async () => {
-//   if (!selected.value?._id) return
-//   await api.delete(`/subscriptions/${selected.value._id}`)
-//   await fetchSubscriptions()
-//   closeModals()
-// }
 
 const endSubscription = async () => {
   if (!selected.value?._id) return
   await api.patch(`/subscriptions/${selected.value._id}/end`)
   await fetchSubscriptions()
+  await convertPrices()
   closeModals()
 }
 
@@ -99,7 +121,10 @@ const closeModals = () => {
   selected.value = null
 }
 
-onMounted(fetchSubscriptions)
+onMounted(async () => {
+  await fetchSubscriptions()
+  await convertPrices()
+})
 </script>
 
 <template>
@@ -114,6 +139,11 @@ onMounted(fetchSubscriptions)
       >
         + New Subscription
       </button>
+    </div>
+
+    <!-- Loading indicator -->
+    <div v-if="isLoadingRates" class="mb-4 p-4 bg-blue-500/20 text-blue-400 rounded-lg">
+      Loading exchange rates...
     </div>
 
     <!-- List -->
@@ -137,7 +167,7 @@ onMounted(fetchSubscriptions)
           </span>
         </div>
 
-        <p class="text-gray-400">{{ formatPrice(sub.price, getCurrency.value) }} / month</p>
+        <p class="text-gray-400">{{ getDisplayPrice(sub) }} / month</p>
         <p class="text-gray-500 text-sm">Payment: {{ sub.paymentDate }}</p>
 
         <div class="flex gap-2 pt-3">
@@ -160,7 +190,7 @@ onMounted(fetchSubscriptions)
         </h2>
 
         <input v-model="form.name" placeholder="Name" class="w-full p-2 bg-gray-800 rounded" />
-        <input v-model.number="form.price" type="number" placeholder="Price" class="w-full p-2 bg-gray-800 rounded" />
+        <input v-model.number="form.price" type="number" placeholder="Price (USD)" class="w-full p-2 bg-gray-800 rounded" />
         <input v-model="form.paymentDate" type="date" class="w-full p-2 bg-gray-800 rounded" />
 
         <div class="flex justify-end gap-2 pt-4">
