@@ -24,16 +24,14 @@ const router = createRouter({
 });
 
 // Navigation guard for protected routes
-router.beforeEach(async (to, _from, next) => {
+router.beforeEach(async (to) => {
   if (to.meta.requiresAuth) {
     try {
       await api.get("/auth/me");
-      next();
+      return true;
     } catch (error) {
-      next("/login");
+      return "/login";
     }
-  } else {
-    next();
   }
 });
 

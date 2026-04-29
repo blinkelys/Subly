@@ -6,6 +6,7 @@ export interface ISubscription extends Document {
   name: string
   price: number
   paymentDate: Date
+  category: string
   status: 'active' | 'ending' | 'ended'
 }
 
@@ -16,6 +17,7 @@ const subscriptionSchema = new Schema<ISubscription>(
     name: { type: String, required: true },
     price: { type: Number, required: true },
     paymentDate: { type: Date, required: true },
+    category: { type: String, default: 'other' },
     status: {
       type: String,
       enum: ['active', 'ending', 'ended'],

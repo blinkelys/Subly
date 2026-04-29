@@ -20,13 +20,14 @@ router.get('/', isAuthenticated, async (req: any, res) => {
 // CREATE subscription
 router.post('/', isAuthenticated, async (req: any, res) => {
   try {
-    const { name, price, paymentDate } = req.body
+    const { name, price, paymentDate, category } = req.body
 
     const sub = await Subscription.create({
       userId: req.session.userId,
       name,
       price,
       paymentDate,
+      category: category || 'Other',
       status: 'active',
     })
 
@@ -48,6 +49,7 @@ router.put('/:id', isAuthenticated, async (req: any, res) => {
         name: req.body.name,
         price: req.body.price,
         paymentDate: req.body.paymentDate,
+        category: req.body.category,
         status: req.body.status,
       },
       { new: true }
