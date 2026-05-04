@@ -81,6 +81,12 @@ const logout = async () => {
           Dashboard
         </RouterLink>
         <RouterLink
+          to="/families"
+          class="text-gray-400 hover:text-white transition-colors duration-200"
+        >
+          Families
+        </RouterLink>
+        <RouterLink
           to="/settings"
           class="text-gray-400 hover:text-white transition-colors duration-200"
         >

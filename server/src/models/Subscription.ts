@@ -2,7 +2,8 @@ import { Schema, model, Document, Types } from 'mongoose'
 
 
 export interface ISubscription extends Document {
-  userId: Types.ObjectId
+  userId?: Types.ObjectId // For personal subscriptions
+  familyId?: Types.ObjectId // For family subscriptions
   name: string
   price: number
   paymentDay: number // Day of month (1-31)
@@ -14,7 +15,8 @@ export interface ISubscription extends Document {
 
 const subscriptionSchema = new Schema<ISubscription>(
   {
-    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    userId: { type: Schema.Types.ObjectId, ref: 'User' },
+    familyId: { type: Schema.Types.ObjectId, ref: 'Family' },
     name: { type: String, required: true },
     price: { type: Number, required: true },
     paymentDay: { type: Number, required: true, min: 1, max: 31 },

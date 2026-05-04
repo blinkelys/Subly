@@ -60,9 +60,11 @@ mongoose
 // Routes
 import authRoute from "./routes/auth";
 import subscriptionRoutes from './routes/subscriptions'
+import familyRoutes from './routes/families'
 
 app.use("/api/auth",  authRoute);
 app.use('/api/subscriptions', subscriptionRoutes)
+app.use('/api/families', familyRoutes)
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${HOST} ${PORT}`));

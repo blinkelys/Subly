@@ -6,6 +6,7 @@ import Register from './pages/auth/Register.vue'
 import Recover from './pages/auth/Recover.vue'
 import Dashboard from './pages/Dashboard.vue'
 import Settings from './pages/Settings.vue'
+import Families from './pages/Families.vue'
 import api from "./api";
 
 const routes = [
@@ -15,6 +16,7 @@ const routes = [
   { path: '/register', component: Register },
   { path: '/recover', component: Recover },
   { path: '/dashboard', component: Dashboard, meta: { requiresAuth: true }, },
+  { path: '/families', component: Families, meta: { requiresAuth: true }, },
   { path: '/settings', component: Settings, meta: { requiresAuth: true }, }
 ]
 

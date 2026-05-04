@@ -2,15 +2,26 @@ import { Router } from 'express'
 import Subscription from '../models/Subscription'
 import { isAuthenticated } from '../middleware/auth'
 import { getNextPaymentDate } from '../utils/subscriptionHelpers'
+import Family from '../models/Family'
 
 const router = Router()
 
 // GET all subscriptions
 router.get('/', isAuthenticated, async (req: any, res) => {
   try {
-    const subs = await Subscription.find({
-      userId: req.session.userId,
-    }).sort({ createdAt: -1 })
+    const { familyId } = req.query
+
+    let query: any = {}
+
+    if (familyId) {
+      // Get family subscriptions
+      query.familyId = familyId
+    } else {
+      // Get personal subscriptions
+      query.userId = req.session.userId
+    }
+
+    const subs = await Subscription.find(query).sort({ createdAt: -1 })
 
     res.json(subs)
   } catch {
@@ -21,16 +32,31 @@ router.get('/', isAuthenticated, async (req: any, res) => {
 // CREATE subscription
 router.post('/', isAuthenticated, async (req: any, res) => {
   try {
-    const { name, price, paymentDay, category } = req.body
+    const { name, price, paymentDay, category, familyId } = req.body
 
-    const sub = await Subscription.create({
-      userId: req.session.userId,
+    let subscriptionData: any = {
       name,
       price,
       paymentDay: parseInt(paymentDay) || 1,
       category: category || 'Other',
       status: 'active',
-    })
+    }
+
+    if (familyId) {
+      // Check if user is a member of this family
+      const family = await Family.findOne({
+        _id: familyId,
+        'members.userId': req.session.userId,
+      })
+
+      if (!family) return res.status(403).json({ error: 'Not a member of this family' })
+
+      subscriptionData.familyId = familyId
+    } else {
+      subscriptionData.userId = req.session.userId
+    }
+
+    const sub = await Subscription.create(subscriptionData)
 
     res.status(201).json(sub)
   } catch {
