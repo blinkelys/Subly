@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { Doughnut, Bar } from 'vue-chartjs'
+import { Doughnut, Bar, Line } from 'vue-chartjs'
 import {
   Chart as ChartJS,
   ArcElement,
@@ -9,12 +9,15 @@ import {
   CategoryScale,
   LinearScale,
   BarElement,
+  LineElement,
+  PointElement,
+  Filler,
 } from 'chart.js'
 import api from '../api'
 import { useUser } from '../composables/useUser'
 import { useCurrency } from '../composables/useCurrency'
 
-ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement)
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, LineElement, PointElement, Filler)
 
 const { getCurrency } = useUser()
 const { convert, formatPrice, fetchExchangeRates } = useCurrency()
@@ -23,9 +26,10 @@ type Subscription = {
   _id?: string
   name: string
   price: number
-  paymentDate: string
+  paymentDay: number // Day of month (1-31)
   category: string
   status: 'active' | 'ending' | 'ended'
+  scheduledEndDate?: string // When subscription will actually end
 }
 
 const CATEGORIES = [
@@ -58,7 +62,7 @@ const selected = ref<Subscription | null>(null)
 const form = ref<Subscription>({
   name: '',
   price: 0,
-  paymentDate: '',
+  paymentDay: 1,
   category: 'Other',
   status: 'active',
 })
@@ -66,7 +70,7 @@ const form = ref<Subscription>({
 /* --------- Computed Properties --------- */
 
 const filteredSubscriptions = computed(() => {
-  let filtered = subscriptions.value.filter((sub) => sub.status === 'active')
+  let filtered = subscriptions.value.filter((sub) => sub.status !== 'ended')
   if (selectedCategory.value !== 'All') {
     filtered = filtered.filter((sub) => sub.category === selectedCategory.value)
   }
@@ -83,7 +87,7 @@ const totalMonthlySpending = computed(() => {
 const spendingByCategory = computed(() => {
   const data: Record<string, number> = {}
   subscriptions.value
-    .filter((sub) => sub.status === 'active')
+    .filter((sub) => sub.status !== 'ended')
     .forEach((sub) => {
       const amount = convertedPrices.value[sub._id || ''] ?? sub.price
       data[sub.category] = (data[sub.category] || 0) + amount
@@ -106,6 +110,45 @@ const categoryColors = computed(() => {
   }
   return colors
 })
+
+/* --------- Subscription Status Helpers --------- */
+
+const getDaysUntilEndDate = (scheduledEndDate?: string): number => {
+  if (!scheduledEndDate) return Infinity
+  const endDate = new Date(scheduledEndDate)
+  const today = new Date()
+  const diffTime = endDate.getTime() - today.getTime()
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+}
+
+const isLastDayBeforeEnd = (scheduledEndDate?: string): boolean => {
+  const daysUntil = getDaysUntilEndDate(scheduledEndDate)
+  return daysUntil === 1
+}
+
+const shouldAutoTransitionToEnded = (scheduledEndDate?: string): boolean => {
+  const daysUntil = getDaysUntilEndDate(scheduledEndDate)
+  return daysUntil <= 0
+}
+
+/* --------- Subscription Notification Infrastructure --------- */
+
+type NotificationEvent = 'last_day_before_payment' | 'payment_day' | 'subscription_ended'
+
+const subscriptionEventHandlers: Record<NotificationEvent, Array<(sub: Subscription) => void>> = {
+  'last_day_before_payment': [],
+  'payment_day': [],
+  'subscription_ended': [],
+}
+
+// Register handlers for future notification features
+const onSubscriptionEvent = (event: NotificationEvent, handler: (sub: Subscription) => void) => {
+  subscriptionEventHandlers[event].push(handler)
+}
+
+const triggerSubscriptionEvent = (event: NotificationEvent, sub: Subscription) => {
+  subscriptionEventHandlers[event].forEach((handler) => handler(sub))
+}
 
 const chartData = computed(() => {
   const labels = Object.keys(spendingByCategory.value)
@@ -157,6 +200,81 @@ const subscriptionsGroupedByCategory = computed(() => {
     grouped[sub.category].push(sub)
   })
   return grouped
+})
+
+const cumulativeSpendingChart = computed(() => {
+  // Sort subscriptions by when they were created (to show cumulative growth)
+  const sortedSubs = [...subscriptions.value].sort((a, b) => {
+    // Use MongoDB ObjectId timestamp for sorting (first 8 chars represent timestamp in hex)
+    const idA = a._id?.toString() || '0'
+    const idB = b._id?.toString() || '0'
+    const timeA = idA.length >= 8 ? parseInt(idA.substring(0, 8), 16) : 0
+    const timeB = idB.length >= 8 ? parseInt(idB.substring(0, 8), 16) : 0
+    return timeA - timeB
+  })
+
+  if (sortedSubs.length === 0) {
+    return null
+  }
+
+  // Calculate cumulative spending based on subscription timeline
+  const dataPoints: Array<{ date: string; cumulative: number }> = []
+  let cumulative = 0
+  const today = new Date()
+
+  sortedSubs.forEach((sub) => {
+    const amount = convertedPrices.value[sub._id || ''] ?? sub.price
+
+    // Add subscription if it's active or if it hasn't ended yet
+    const endDate = sub.scheduledEndDate ? new Date(sub.scheduledEndDate) : null
+    const hasEnded = sub.status === 'ended' || (endDate && endDate < today)
+
+    if (!hasEnded) {
+      cumulative += amount
+      // Extract timestamp from MongoDB ObjectId
+      const idStr = sub._id?.toString() || '0'
+      const timestamp = idStr.length >= 8 ? parseInt(idStr.substring(0, 8), 16) * 1000 : 0
+      const idDate = new Date(timestamp)
+      const date = idDate.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: '2-digit',
+      })
+      dataPoints.push({ date, cumulative })
+    }
+  })
+
+  // Add today's total
+  const todayStr = today.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: '2-digit',
+  })
+  if (dataPoints.length > 0 && dataPoints[dataPoints.length - 1].date !== todayStr) {
+    dataPoints.push({
+      date: todayStr,
+      cumulative: dataPoints[dataPoints.length - 1].cumulative,
+    })
+  }
+
+  return {
+    labels: dataPoints.map((p) => p.date),
+    datasets: [
+      {
+        label: `Cumulative Spending (${getCurrency.value})`,
+        data: dataPoints.map((p) => p.cumulative),
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        pointBackgroundColor: '#3b82f6',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+      },
+    ],
+  }
 })
 
 /* --------- Subscriptions API --------- */
@@ -220,10 +338,41 @@ const endSubscription = async () => {
   closeModals()
 }
 
+/* --------- Auto-Transition Logic --------- */
+
+const autoTransitionEndingToEnded = async () => {
+  // Check each 'ending' subscription and transition to 'ended' if scheduled end date has passed
+  for (const sub of subscriptions.value) {
+    if (sub.status === 'ending' && shouldAutoTransitionToEnded(sub.scheduledEndDate)) {
+      try {
+        await api.patch(`/subscriptions/${sub._id}/mark-ended`)
+        triggerSubscriptionEvent('subscription_ended', sub)
+      } catch (error) {
+        console.error('Failed to transition subscription to ended:', error)
+      }
+    }
+  }
+}
+
+/* --------- Check for notification events --------- */
+
+const checkSubscriptionEvents = () => {
+  for (const sub of subscriptions.value) {
+    if (sub.status === 'ending') {
+      if (isLastDayBeforeEnd(sub.scheduledEndDate)) {
+        triggerSubscriptionEvent('last_day_before_payment', sub)
+      }
+      if (shouldAutoTransitionToEnded(sub.scheduledEndDate)) {
+        triggerSubscriptionEvent('payment_day', sub)
+      }
+    }
+  }
+}
+
 /* ---------------- UI actions ---------------- */
 
 const openCreate = () => {
-  form.value = { name: '', price: 0, paymentDate: '', category: 'Other', status: 'active' }
+  form.value = { name: '', price: 0, paymentDay: 1, category: 'Other', status: 'active' }
   showCreateModal.value = true
 }
 
@@ -248,6 +397,8 @@ const closeModals = () => {
 onMounted(async () => {
   await fetchSubscriptions()
   await convertPrices()
+  await autoTransitionEndingToEnded()
+  checkSubscriptionEvents()
 })
 </script>
 
@@ -332,6 +483,28 @@ onMounted(async () => {
       </div>
     </div>
 
+    <!-- Cumulative Spending Chart -->
+    <div v-if="cumulativeSpendingChart" class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
+      <h2 class="text-lg font-semibold mb-4">Cumulative Spending Over Time</h2>
+      <div style="height: 350px">
+        <Line
+          :data="cumulativeSpendingChart"
+          :options="{
+            maintainAspectRatio: false,
+            responsive: true,
+            plugins: {
+              legend: { display: true, labels: { color: '#fff' } },
+              tooltip: { backgroundColor: 'rgba(0, 0, 0, 0.8)', padding: 12, titleColor: '#fff', bodyColor: '#fff' },
+            },
+            scales: {
+              x: { ticks: { color: '#999' }, grid: { color: '#333' } },
+              y: { ticks: { color: '#999' }, grid: { color: '#333' }, beginAtZero: true },
+            },
+          }"
+        />
+      </div>
+    </div>
+
     <!-- Subscriptions Section -->
     <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
@@ -365,29 +538,52 @@ onMounted(async () => {
             <div
               v-for="sub in subs"
               :key="sub._id"
-              class="flex items-center justify-between bg-gray-800/50 hover:bg-gray-800 rounded-lg p-4 transition group"
+              class="space-y-2"
             >
-              <div class="flex-grow">
-                <p class="font-medium">{{ sub.name }}</p>
-                <p class="text-sm text-gray-400">Payment on {{ sub.paymentDate }}</p>
+              <!-- Warning for ending subscriptions on last day -->
+              <div
+                v-if="sub.status === 'ending' && isLastDayBeforeEnd(sub.scheduledEndDate)"
+                class="bg-red-500/20 border border-red-500/50 rounded-lg p-3"
+              >
+                <p class="text-red-400 text-sm font-semibold">⚠️ Final Day - Ends Tomorrow</p>
+                <p class="text-red-300 text-xs">This subscription will be cancelled on {{ new Date(sub.scheduledEndDate || '').toLocaleDateString() }}.</p>
               </div>
 
-              <div class="flex items-center gap-4">
-                <p class="font-semibold whitespace-nowrap">{{ getDisplayPrice(sub) }}/mo</p>
+              <!-- Warning for ending subscriptions (general) -->
+              <div
+                v-else-if="sub.status === 'ending'"
+                class="bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-3"
+              >
+                <p class="text-yellow-400 text-sm font-semibold">⏱️ Ending Subscription</p>
+                <p class="text-yellow-300 text-xs">Cancels on {{ new Date(sub.scheduledEndDate || '').toLocaleDateString() }}</p>
+              </div>
 
-                <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition">
-                  <button
-                    @click="openEdit(sub)"
-                    class="px-3 py-1 text-sm bg-blue-600/20 text-blue-400 rounded hover:bg-blue-600/30 transition"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    @click="openEnd(sub)"
-                    class="px-3 py-1 text-sm bg-yellow-600/20 text-yellow-400 rounded hover:bg-yellow-600/30 transition"
-                  >
-                    End
-                  </button>
+              <div
+                class="flex items-center justify-between bg-gray-800/50 hover:bg-gray-800 rounded-lg p-4 transition group"
+              >
+                <div class="flex-grow">
+                  <p class="font-medium">{{ sub.name }}</p>
+                  <p class="text-sm text-gray-400">Renews on day {{ sub.paymentDay }} of each month</p>
+                </div>
+
+                <div class="flex items-center gap-4">
+                  <p class="font-semibold whitespace-nowrap">{{ getDisplayPrice(sub) }}/mo</p>
+
+                  <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                    <button
+                      @click="openEdit(sub)"
+                      class="px-3 py-1 text-sm bg-blue-600/20 text-blue-400 rounded hover:bg-blue-600/30 transition"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      v-if="sub.status === 'active'"
+                      @click="openEnd(sub)"
+                      class="px-3 py-1 text-sm bg-yellow-600/20 text-yellow-400 rounded hover:bg-yellow-600/30 transition"
+                    >
+                      End
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -420,8 +616,9 @@ onMounted(async () => {
           </div>
 
           <div>
-            <label class="block text-sm text-gray-400 mb-1">Payment Date</label>
-            <input v-model="form.paymentDate" type="date" class="w-full p-2.5 bg-gray-800 border border-gray-700 rounded text-white focus:border-blue-500 outline-none" />
+            <label class="block text-sm text-gray-400 mb-1">Payment Day (of month)</label>
+            <input v-model.number="form.paymentDay" type="number" min="1" max="31" placeholder="1-31" class="w-full p-2.5 bg-gray-800 border border-gray-700 rounded text-white focus:border-blue-500 outline-none" />
+            <p class="text-xs text-gray-500 mt-1">The day of each month when this subscription renews</p>
           </div>
 
           <div>

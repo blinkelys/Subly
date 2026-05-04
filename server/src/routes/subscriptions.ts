@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import Subscription from '../models/Subscription'
 import { isAuthenticated } from '../middleware/auth'
+import { getNextPaymentDate } from '../utils/subscriptionHelpers'
 
 const router = Router()
 
@@ -20,13 +21,13 @@ router.get('/', isAuthenticated, async (req: any, res) => {
 // CREATE subscription
 router.post('/', isAuthenticated, async (req: any, res) => {
   try {
-    const { name, price, paymentDate, category } = req.body
+    const { name, price, paymentDay, category } = req.body
 
     const sub = await Subscription.create({
       userId: req.session.userId,
       name,
       price,
-      paymentDate,
+      paymentDay: parseInt(paymentDay) || 1,
       category: category || 'Other',
       status: 'active',
     })
@@ -43,12 +44,12 @@ router.put('/:id', isAuthenticated, async (req: any, res) => {
     const updated = await Subscription.findOneAndUpdate(
       {
         _id: req.params.id,
-        userId: req.session.userId, //  ownership check
+        userId: req.session.userId,
       },
       {
         name: req.body.name,
         price: req.body.price,
-        paymentDate: req.body.paymentDate,
+        paymentDay: req.body.paymentDay ? parseInt(req.body.paymentDay) : undefined,
         category: req.body.category,
         status: req.body.status,
       },
@@ -66,23 +67,55 @@ router.put('/:id', isAuthenticated, async (req: any, res) => {
 
 // No hard delete. Use PATCH /:id/end to flag as ending.
 
-// END subscription (flag as ending, not ended)
+// END subscription (flag as ending and calculate scheduled end date)
 router.patch('/:id/end', isAuthenticated, async (req: any, res) => {
   try {
+    const sub = await Subscription.findOne({
+      _id: req.params.id,
+      userId: req.session.userId,
+    })
+
+    if (!sub) return res.status(404).json({ error: 'Not found' })
+
+    // Calculate when this subscription will actually end (next payment date)
+    const scheduledEndDate = getNextPaymentDate(sub.paymentDay)
+
     const updated = await Subscription.findOneAndUpdate(
       {
         _id: req.params.id,
         userId: req.session.userId,
       },
-      { status: 'ending' },
+      {
+        status: 'ending',
+        scheduledEndDate,
+      },
       { new: true }
     )
-
-    if (!updated) return res.status(404).json({ error: 'Not found' })
 
     res.json(updated)
   } catch {
     res.status(500).json({ error: 'Failed to end subscription' })
+  }
+})
+
+// MARK as ended (transition from ending to ended when scheduled end date arrives)
+router.patch('/:id/mark-ended', isAuthenticated, async (req: any, res) => {
+  try {
+    const updated = await Subscription.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        userId: req.session.userId,
+        status: 'ending',
+      },
+      { status: 'ended' },
+      { new: true }
+    )
+
+    if (!updated) return res.status(404).json({ error: 'Not found or not in ending status' })
+
+    res.json(updated)
+  } catch {
+    res.status(500).json({ error: 'Failed to mark subscription as ended' })
   }
 })
 
