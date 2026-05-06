@@ -1,12 +1,12 @@
 import { Router } from 'express'
 import Family from '../models/Family'
 import { isAuthenticated } from '../middleware/auth'
-import crypto from 'crypto'
+import { randomBytes } from 'crypto'
 
 const router = Router()
 
 // Generate invite code
-const generateInviteCode = () => crypto.randomBytes(16).toString('hex')
+const generateInviteCode = () => randomBytes(16).toString('hex')
 
 // GET user's families
 router.get('/', isAuthenticated, async (req: any, res) => {
