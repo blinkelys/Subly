@@ -7,6 +7,8 @@ import Recover from './pages/auth/Recover.vue'
 import Dashboard from './pages/Dashboard.vue'
 import Settings from './pages/Settings.vue'
 import Families from './pages/Families.vue'
+import PrivacyPolicy from './pages/PrivacyPolicy.vue'
+import TermsOfService from './pages/TermsOfService.vue'
 import api from "./api";
 
 const routes = [
@@ -17,7 +19,9 @@ const routes = [
   { path: '/recover', component: Recover },
   { path: '/dashboard', component: Dashboard, meta: { requiresAuth: true }, },
   { path: '/families', component: Families, meta: { requiresAuth: true }, },
-  { path: '/settings', component: Settings, meta: { requiresAuth: true }, }
+  { path: '/settings', component: Settings, meta: { requiresAuth: true }, },
+  { path: '/privacy-policy', component: PrivacyPolicy },
+  { path: '/terms-of-service', component: TermsOfService },
 ]
 
 const router = createRouter({

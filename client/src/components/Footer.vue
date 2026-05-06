@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { RouterLink } from 'vue-router'
 
 const year = ref(new Date().getFullYear())
 </script>
@@ -69,23 +70,21 @@ const year = ref(new Date().getFullYear())
         <!-- Legal Links -->
         <div>
           <h3 class="text-white font-semibold text-sm mb-4">Legal</h3>
-          <ul class="space-y-2 text-xs sm:text-sm">
-            <li>
-              <a href="#" class="hover:text-blue-400 transition-colors duration-200">
-                Privacy Policy
-              </a>
-            </li>
-            <li>
-              <a href="#" class="hover:text-blue-400 transition-colors duration-200">
-                Terms of Service
-              </a>
-            </li>
-            <li>
-              <a href="#" class="hover:text-blue-400 transition-colors duration-200">
-                Cookie Policy
-              </a>
-            </li>
-          </ul>
+          <div class="space-y-2">
+            <RouterLink
+              to="/privacy-policy"
+              class="inline-block px-3 py-1.5 text-xs sm:text-sm bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white rounded transition-colors duration-200"
+            >
+              Privacy Policy
+            </RouterLink>
+            <br>
+            <RouterLink
+              to="/terms-of-service"
+              class="inline-block px-3 py-1.5 text-xs sm:text-sm bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white rounded transition-colors duration-200"
+            >
+              Terms of Service
+            </RouterLink>
+          </div>
         </div>
       </div>
 

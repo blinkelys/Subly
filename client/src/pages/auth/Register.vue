@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, RouterLink } from 'vue-router'
 import api from '../../api'
 
 const router = useRouter()
@@ -107,6 +107,28 @@ const handleLogin = () => {
         {{ error }}
       </div>
 
+      <!-- Legal Notice -->
+      <div class="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
+        <h3 class="text-sm font-semibold text-gray-300 mb-2">Legal Information</h3>
+        <p class="text-xs text-gray-400 mb-3">
+          By creating an account, you agree to our terms and policies. Please review these documents to understand how we protect your data and your rights.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <RouterLink
+            to="/terms-of-service"
+            class="px-3 py-1.5 text-xs bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 rounded transition-colors duration-200 text-center"
+          >
+            📋 Terms of Service
+          </RouterLink>
+          <RouterLink
+            to="/privacy-policy"
+            class="px-3 py-1.5 text-xs bg-purple-600/20 text-purple-400 hover:bg-purple-600/30 rounded transition-colors duration-200 text-center"
+          >
+            🔒 Privacy Policy
+          </RouterLink>
+        </div>
+      </div>
+
       <!-- Form -->
       <form @submit.prevent="handleRegister" class="space-y-6">
         <!-- Email Field -->
@@ -210,10 +232,10 @@ const handleLogin = () => {
             class="w-4 h-4 mt-1 rounded bg-gray-800 border border-gray-700 text-blue-500 focus:ring-blue-500 cursor-pointer flex-shrink-0"
           />
           <span class="text-sm text-gray-400">
-            I agree to the
-            <a href="#" class="text-blue-400 hover:text-blue-300 transition-colors">Terms of Service</a>
+            I have read and agree to the
+            <RouterLink to="/terms-of-service" class="text-blue-400 hover:text-blue-300 font-medium transition-colors">Terms of Service</RouterLink>
             and
-            <a href="#" class="text-blue-400 hover:text-blue-300 transition-colors">Privacy Policy</a>
+            <RouterLink to="/privacy-policy" class="text-blue-400 hover:text-blue-300 font-medium transition-colors">Privacy Policy</RouterLink>
           </span>
         </label>
 
