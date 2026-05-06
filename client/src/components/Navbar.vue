@@ -177,6 +177,13 @@ const logout = async () => {
             Dashboard
           </RouterLink>
           <RouterLink
+            to="/families"
+            class="block text-gray-400 hover:text-white transition-colors duration-200"
+            @click="isMenuOpen = false"
+          >
+            Families
+          </RouterLink>
+          <RouterLink
             to="/settings"
             class="block text-gray-400 hover:text-white transition-colors duration-200"
             @click="isMenuOpen = false"

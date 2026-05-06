@@ -145,23 +145,23 @@ onMounted(() => {
 <template>
   <div class="min-h-screen bg-gray-950 text-white p-4 md:p-8">
     <!-- Header -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-3">
       <div>
-        <h1 class="text-4xl font-bold">Families</h1>
-        <p class="text-gray-400 mt-1">Create or join family groups to share subscriptions</p>
+        <h1 class="text-3xl sm:text-4xl font-bold">Families</h1>
+        <p class="text-gray-400 text-sm sm:text-base mt-1">Create or join family groups to share subscriptions</p>
       </div>
 
-      <div class="flex gap-2">
+      <div class="flex gap-2 w-full md:w-auto flex-col sm:flex-row">
         <button
           @click="showCreateModal = true"
-          class="px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 transition font-medium"
+          class="px-4 sm:px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition font-medium text-sm sm:text-base w-full sm:w-auto"
         >
           + Create Family
         </button>
 
         <button
           @click="showAcceptModal = true"
-          class="px-6 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 transition font-medium"
+          class="px-4 sm:px-6 py-2 rounded-lg bg-green-600 hover:bg-green-700 transition font-medium text-sm sm:text-base w-full sm:w-auto"
         >
           Accept Invite
         </button>
@@ -176,24 +176,24 @@ onMounted(() => {
 
     <!-- Families List -->
     <div v-if="families.length > 0" class="space-y-6">
-      <div v-for="family in families" :key="family._id" class="bg-gray-900 border border-gray-800 rounded-xl p-6">
+      <div v-for="family in families" :key="family._id" class="bg-gray-900 border border-gray-800 rounded-xl p-4 sm:p-6">
         <!-- Header -->
-        <div class="flex justify-between items-start mb-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
           <div>
-            <h2 class="text-2xl font-bold">{{ family.name }}</h2>
-            <p class="text-gray-400 text-sm">Owner: {{ family.ownerId.username }}</p>
+            <h2 class="text-xl sm:text-2xl font-bold">{{ family.name }}</h2>
+            <p class="text-gray-400 text-xs sm:text-sm mt-1">Owner: {{ family.ownerId.username }}</p>
           </div>
 
-          <div class="flex gap-2">
+          <div class="flex gap-2 w-full sm:w-auto flex-col sm:flex-row">
             <button
               @click="selectedFamily = family; showInviteModal = true"
-              class="px-4 py-2 text-sm bg-blue-600/20 text-blue-400 rounded hover:bg-blue-600/30 transition"
+              class="px-3 sm:px-4 py-2 text-xs sm:text-sm bg-blue-600/20 text-blue-400 rounded hover:bg-blue-600/30 transition w-full sm:w-auto"
             >
               Invite
             </button>
             <button
               @click="leaveFamily(family._id)"
-              class="px-4 py-2 text-sm bg-yellow-600/20 text-yellow-400 rounded hover:bg-yellow-600/30 transition"
+              class="px-3 sm:px-4 py-2 text-xs sm:text-sm bg-yellow-600/20 text-yellow-400 rounded hover:bg-yellow-600/30 transition w-full sm:w-auto"
             >
               Leave
             </button>
@@ -202,23 +202,23 @@ onMounted(() => {
 
         <!-- Members -->
         <div class="mb-6">
-          <h3 class="text-lg font-semibold mb-3">Members ({{ family.members.length }})</h3>
+          <h3 class="text-base sm:text-lg font-semibold mb-3">Members ({{ family.members.length }})</h3>
           <div class="space-y-2">
             <div
               v-for="member in family.members"
               :key="member.userId._id"
-              class="flex justify-between items-center bg-gray-800/50 p-3 rounded"
+              class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-gray-800/50 p-3 rounded gap-2"
             >
-              <div>
-                <p class="font-medium">{{ member.userId.username }}</p>
-                <p class="text-sm text-gray-400">{{ member.userId.email }}</p>
+              <div class="flex-grow min-w-0">
+                <p class="font-medium text-sm sm:text-base">{{ member.userId.username }}</p>
+                <p class="text-xs sm:text-sm text-gray-400 truncate">{{ member.userId.email }}</p>
                 <p class="text-xs text-gray-500">{{ member.role }}</p>
               </div>
 
               <button
                 v-if="family.ownerId._id !== member.userId._id"
                 @click="removeMember(family._id, member.userId._id)"
-                class="px-3 py-1 text-sm bg-red-600/20 text-red-400 rounded hover:bg-red-600/30 transition"
+                class="px-3 py-1 text-xs sm:text-sm bg-red-600/20 text-red-400 rounded hover:bg-red-600/30 transition w-full sm:w-auto"
               >
                 Remove
               </button>
@@ -228,10 +228,10 @@ onMounted(() => {
 
         <!-- Pending Invites -->
         <div v-if="family.invites && family.invites.length > 0" class="mb-6">
-          <h3 class="text-lg font-semibold mb-3">Pending Invites</h3>
+          <h3 class="text-base sm:text-lg font-semibold mb-3">Pending Invites</h3>
           <div class="space-y-2">
             <div v-for="invite in family.invites" :key="invite.code" class="bg-gray-800/50 p-3 rounded">
-              <p class="font-medium">{{ invite.email }}</p>
+              <p class="font-medium text-sm sm:text-base">{{ invite.email }}</p>
               <p class="text-xs text-gray-500">Expires: {{ new Date(invite.expiresAt).toLocaleDateString() }}</p>
             </div>
           </div>
@@ -241,7 +241,7 @@ onMounted(() => {
         <div v-if="family.ownerId._id === currentUser?._id">
           <button
             @click="deleteFamily(family._id)"
-            class="px-4 py-2 text-sm bg-red-600/20 text-red-400 rounded hover:bg-red-600/30 transition"
+            class="px-3 sm:px-4 py-2 text-xs sm:text-sm bg-red-600/20 text-red-400 rounded hover:bg-red-600/30 transition w-full sm:w-auto"
           >
             Delete Family
           </button>
@@ -254,8 +254,8 @@ onMounted(() => {
     </div>
 
     <!-- CREATE FAMILY MODAL -->
-    <div v-if="showCreateModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div class="bg-gray-900 p-6 rounded-xl w-full max-w-md space-y-4">
+    <div v-if="showCreateModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+      <div class="bg-gray-900 p-6 rounded-xl w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto">
         <h2 class="text-xl font-bold">Create New Family</h2>
 
         <input
@@ -283,8 +283,8 @@ onMounted(() => {
     </div>
 
     <!-- INVITE MODAL -->
-    <div v-if="showInviteModal && selectedFamily" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div class="bg-gray-900 p-6 rounded-xl w-full max-w-md space-y-4">
+    <div v-if="showInviteModal && selectedFamily" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+      <div class="bg-gray-900 p-6 rounded-xl w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto">
         <h2 class="text-xl font-bold">Invite to {{ selectedFamily.name }}</h2>
 
         <input
@@ -313,8 +313,8 @@ onMounted(() => {
     </div>
 
     <!-- ACCEPT INVITE MODAL -->
-    <div v-if="showAcceptModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div class="bg-gray-900 p-6 rounded-xl w-full max-w-md space-y-4">
+    <div v-if="showAcceptModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+      <div class="bg-gray-900 p-6 rounded-xl w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto">
         <h2 class="text-xl font-bold">Accept Invite</h2>
 
         <input

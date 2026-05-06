@@ -70,12 +70,12 @@ const getCurrenciesForCountry = () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-950 text-white p-8">
+  <div class="min-h-screen bg-gray-950 text-white p-4 md:p-8">
     <div class="max-w-2xl mx-auto">
       <!-- Header -->
       <div class="mb-8">
-        <h1 class="text-3xl font-bold mb-2">Settings</h1>
-        <p class="text-gray-400">Manage your preferences</p>
+        <h1 class="text-3xl sm:text-4xl font-bold mb-2">Settings</h1>
+        <p class="text-gray-400 text-sm sm:text-base">Manage your preferences</p>
       </div>
 
       <!-- Settings Card -->
@@ -85,7 +85,7 @@ const getCurrenciesForCountry = () => {
           <label class="block text-sm font-semibold mb-2">Currency</label>
           <select
             v-model="selectedCurrency"
-            class="w-full p-2 bg-gray-800 border border-gray-700 rounded text-white focus:outline-none focus:border-blue-500"
+            class="w-full px-3 sm:px-4 py-2 text-sm sm:text-base bg-gray-800 border border-gray-700 rounded text-white focus:outline-none focus:border-blue-500"
           >
             <option value="">Select a currency</option>
             <option v-for="currency in getCurrenciesForCountry()" :key="currency.code" :value="currency.code">
@@ -99,7 +99,7 @@ const getCurrenciesForCountry = () => {
           <label class="block text-sm font-semibold mb-2">Country</label>
           <select
             v-model="selectedCountry"
-            class="w-full p-2 bg-gray-800 border border-gray-700 rounded text-white focus:outline-none focus:border-blue-500"
+            class="w-full px-3 sm:px-4 py-2 text-sm sm:text-base bg-gray-800 border border-gray-700 rounded text-white focus:outline-none focus:border-blue-500"
           >
             <option value="">Select a country</option>
             <option v-for="country in getCountries()" :key="country" :value="country">
@@ -109,18 +109,18 @@ const getCurrenciesForCountry = () => {
         </div>
 
         <!-- Current User Info -->
-        <div v-if="currentUser" class="bg-gray-800/50 border border-gray-700 rounded p-4">
-          <p class="text-sm text-gray-400 mb-2">Current Settings:</p>
-          <p class="text-white">
+        <div v-if="currentUser" class="bg-gray-800/50 border border-gray-700 rounded p-4 space-y-2">
+          <p class="text-xs sm:text-sm text-gray-400 font-semibold">Current Settings:</p>
+          <p class="text-white text-sm">
             <strong>Username:</strong> {{ currentUser.username }}
           </p>
-          <p class="text-white">
-            <strong>Email:</strong> {{ currentUser.email }}
+          <p class="text-white text-sm">
+            <strong>Email:</strong> <span class="truncate">{{ currentUser.email }}</span>
           </p>
-          <p class="text-white">
+          <p class="text-white text-sm">
             <strong>Currency:</strong> {{ currentUser.currency }}
           </p>
-          <p class="text-white">
+          <p class="text-white text-sm">
             <strong>Country:</strong> {{ currentUser.country }}
           </p>
         </div>
@@ -143,7 +143,7 @@ const getCurrenciesForCountry = () => {
         <button
           @click="handleSave"
           :disabled="isLoading"
-          class="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 rounded transition"
+          class="w-full px-4 py-2 text-sm sm:text-base bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 rounded transition font-medium"
         >
           {{ isLoading ? 'Saving...' : 'Save Settings' }}
         </button>

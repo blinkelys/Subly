@@ -425,16 +425,16 @@ onMounted(async () => {
     </div>
 
     <!-- Summary Cards -->
-    <div class="grid md:grid-cols-3 gap-6 mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
       <!-- Total Monthly Spending -->
-      <div class="bg-gradient-to-br from-blue-600/20 to-blue-600/5 border border-blue-500/30 rounded-xl p-6">
+      <div class="bg-gradient-to-br from-blue-600/20 to-blue-600/5 border border-blue-500/30 rounded-xl p-4 sm:p-6">
         <p class="text-gray-400 text-sm font-medium">Total Monthly Spending</p>
         <p class="text-3xl font-bold mt-2">{{ formatPrice(totalMonthlySpending, getCurrency) }}</p>
         <p class="text-xs text-gray-500 mt-2">{{ filteredSubscriptions.length }} active subscriptions</p>
       </div>
 
       <!-- Average Per Subscription -->
-      <div class="bg-gradient-to-br from-purple-600/20 to-purple-600/5 border border-purple-500/30 rounded-xl p-6">
+      <div class="bg-gradient-to-br from-purple-600/20 to-purple-600/5 border border-purple-500/30 rounded-xl p-4 sm:p-6">
         <p class="text-gray-400 text-sm font-medium">Average Per Subscription</p>
         <p class="text-3xl font-bold mt-2">
           {{
@@ -448,7 +448,7 @@ onMounted(async () => {
       </div>
 
       <!-- Active Categories -->
-      <div class="bg-gradient-to-br from-green-600/20 to-green-600/5 border border-green-500/30 rounded-xl p-6">
+      <div class="bg-gradient-to-br from-green-600/20 to-green-600/5 border border-green-500/30 rounded-xl p-4 sm:p-6">
         <p class="text-gray-400 text-sm font-medium">Active Categories</p>
         <p class="text-3xl font-bold mt-2">{{ Object.keys(spendingByCategory).length }}</p>
         <p class="text-xs text-gray-500 mt-2">Subscription categories</p>
@@ -456,19 +456,19 @@ onMounted(async () => {
     </div>
 
     <!-- Charts Section -->
-    <div class="grid lg:grid-cols-2 gap-6 mb-8">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-8">
       <!-- Doughnut Chart -->
-      <div v-if="chartData.labels.length > 0" class="bg-gray-900 border border-gray-800 rounded-xl p-6">
-        <h2 class="text-lg font-semibold mb-4">Spending by Category</h2>
-        <div class="flex justify-center" style="max-height: 300px">
+      <div v-if="chartData.labels.length > 0" class="bg-gray-900 border border-gray-800 rounded-xl p-4 sm:p-6">
+        <h2 class="text-base sm:text-lg font-semibold mb-4">Spending by Category</h2>
+        <div class="flex justify-center" style="max-height: 250px; min-height: 200px;">
           <Doughnut :data="chartData" :options="{ maintainAspectRatio: false, responsive: true, plugins: { legend: { position: 'bottom' } } }" />
         </div>
       </div>
 
       <!-- Bar Chart -->
-      <div v-if="barChartData.labels.length > 0" class="bg-gray-900 border border-gray-800 rounded-xl p-6">
-        <h2 class="text-lg font-semibold mb-4">Top Categories</h2>
-        <div style="height: 300px">
+      <div v-if="barChartData.labels.length > 0" class="bg-gray-900 border border-gray-800 rounded-xl p-4 sm:p-6">
+        <h2 class="text-base sm:text-lg font-semibold mb-4">Top Categories</h2>
+        <div style="height: 250px; min-height: 200px;">
           <Bar
             :data="barChartData"
             :options="{
@@ -484,9 +484,9 @@ onMounted(async () => {
     </div>
 
     <!-- Cumulative Spending Chart -->
-    <div v-if="cumulativeSpendingChart" class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
-      <h2 class="text-lg font-semibold mb-4">Cumulative Spending Over Time</h2>
-      <div style="height: 350px">
+    <div v-if="cumulativeSpendingChart" class="bg-gray-900 border border-gray-800 rounded-xl p-4 sm:p-6 mb-8">
+      <h2 class="text-base sm:text-lg font-semibold mb-4">Cumulative Spending Over Time</h2>
+      <div style="height: 280px;">
         <Line
           :data="cumulativeSpendingChart"
           :options="{
@@ -506,15 +506,15 @@ onMounted(async () => {
     </div>
 
     <!-- Subscriptions Section -->
-    <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 sm:p-6">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <h2 class="text-xl font-semibold">Your Subscriptions</h2>
+        <h2 class="text-lg sm:text-xl font-semibold">Your Subscriptions</h2>
 
         <!-- Category Filter -->
         <div class="w-full md:w-auto">
           <select
             v-model="selectedCategory"
-            class="w-full px-4 py-2 bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-600 transition text-white"
+            class="w-full px-3 sm:px-4 py-2 text-sm sm:text-base bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-600 transition text-white"
           >
             <option value="All">All Categories</option>
             <option v-for="cat in CATEGORIES" :key="cat" :value="cat">{{ cat }}</option>
@@ -559,27 +559,27 @@ onMounted(async () => {
               </div>
 
               <div
-                class="flex items-center justify-between bg-gray-800/50 hover:bg-gray-800 rounded-lg p-4 transition group"
+                class="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-gray-800/50 hover:bg-gray-800 rounded-lg p-3 sm:p-4 transition group gap-3"
               >
-                <div class="flex-grow">
-                  <p class="font-medium">{{ sub.name }}</p>
-                  <p class="text-sm text-gray-400">Renews on day {{ sub.paymentDay }} of each month</p>
+                <div class="flex-grow min-w-0">
+                  <p class="font-medium truncate">{{ sub.name }}</p>
+                  <p class="text-xs sm:text-sm text-gray-400">Renews on day {{ sub.paymentDay }} of each month</p>
                 </div>
 
-                <div class="flex items-center gap-4">
-                  <p class="font-semibold whitespace-nowrap">{{ getDisplayPrice(sub) }}/mo</p>
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
+                  <p class="font-semibold whitespace-nowrap text-sm sm:text-base">{{ getDisplayPrice(sub) }}/mo</p>
 
-                  <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                  <div class="flex gap-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition w-full sm:w-auto">
                     <button
                       @click="openEdit(sub)"
-                      class="px-3 py-1 text-sm bg-blue-600/20 text-blue-400 rounded hover:bg-blue-600/30 transition"
+                      class="px-2 sm:px-3 py-1 text-xs sm:text-sm bg-blue-600/20 text-blue-400 rounded hover:bg-blue-600/30 transition flex-1 sm:flex-none"
                     >
                       Edit
                     </button>
                     <button
                       v-if="sub.status === 'active'"
                       @click="openEnd(sub)"
-                      class="px-3 py-1 text-sm bg-yellow-600/20 text-yellow-400 rounded hover:bg-yellow-600/30 transition"
+                      class="px-2 sm:px-3 py-1 text-xs sm:text-sm bg-yellow-600/20 text-yellow-400 rounded hover:bg-yellow-600/30 transition flex-1 sm:flex-none"
                     >
                       End
                     </button>
@@ -598,8 +598,8 @@ onMounted(async () => {
     </div>
 
     <!-- CREATE / EDIT MODAL -->
-    <div v-if="showCreateModal || showEditModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div class="bg-gray-900 p-6 rounded-xl w-full max-w-md space-y-4">
+    <div v-if="showCreateModal || showEditModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+      <div class="bg-gray-900 p-6 rounded-xl w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto">
         <h2 class="text-xl font-bold">
           {{ showCreateModal ? 'Add New' : 'Edit' }} Subscription
         </h2>
@@ -645,8 +645,8 @@ onMounted(async () => {
     </div>
 
     <!-- END MODAL -->
-    <div v-if="showEndModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div class="bg-gray-900 p-6 rounded-xl space-y-4">
+    <div v-if="showEndModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+      <div class="bg-gray-900 p-6 rounded-xl space-y-4 w-full max-w-md">
         <h2 class="text-lg font-semibold">End Subscription?</h2>
         <p class="text-gray-400">Are you sure you want to end <span class="font-semibold">{{ selected?.name }}</span>?</p>
 
