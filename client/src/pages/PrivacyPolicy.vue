@@ -112,7 +112,7 @@ const goBack = () => {
           <h3 class="text-2xl font-semibold text-blue-400">8. Contact Us</h3>
           <p class="text-gray-300 leading-8">
             For privacy-related questions, contact us at:
-            <span class="text-blue-400">privacy@yoursite.com</span>
+            <span class="text-blue-400">59slemar@stud.akademiet.no</span>
           </p>
         </section>
       </div>
