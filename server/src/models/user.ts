@@ -7,6 +7,11 @@ export interface IUser extends Document {
   role: string;
   currency: string; // e.g., "USD", "EUR", "GBP"
   country: string; // e.g., "US", "DE", "GB"
+  emailVerified: boolean;
+  emailVerificationToken?: string;
+  emailVerificationExpires?: Date;
+  passwordResetToken?: string;
+  passwordResetExpires?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -46,6 +51,22 @@ const userSchema = new Schema<IUser>(
       type: String,
       default: "US",
       enum: ["US", "DE", "GB", "JP", "CA", "AU", "CH", "IN", "MX", "BR", "SG"],
+    },
+    emailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    emailVerificationToken: {
+      type: String,
+    },
+    emailVerificationExpires: {
+      type: Date,
+    },
+    passwordResetToken: {
+      type: String,
+    },
+    passwordResetExpires: {
+      type: Date,
     },
   },
   {

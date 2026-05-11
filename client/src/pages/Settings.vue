@@ -11,7 +11,7 @@ const selectedCurrency = ref('')
 const selectedCountry = ref('')
 const isLoading = ref(false)
 const message = ref('')
-const messageType = ref<'success' | 'error'>('')
+const messageType = ref<'' | 'success' | 'error'>('')
 
 onMounted(async () => {
   // Fetch supported currencies

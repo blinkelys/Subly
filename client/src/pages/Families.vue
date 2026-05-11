@@ -64,7 +64,7 @@ const inviteToFamily = async () => {
 
   try {
     loading.value = true
-    const res = await api.post(`/families/${selectedFamily.value._id}/invite`, {
+    await api.post(`/families/${selectedFamily.value._id}/invite`, {
       email: inviteEmail.value,
     })
     message.value = `Invite sent to ${inviteEmail.value}`
@@ -341,4 +341,7 @@ onMounted(() => {
       </div>
     </div>
   </div>
+</template>
+
+<script setup lang="ts">
 </script>

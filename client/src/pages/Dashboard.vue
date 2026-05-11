@@ -142,9 +142,9 @@ const subscriptionEventHandlers: Record<NotificationEvent, Array<(sub: Subscript
 }
 
 // Register handlers for future notification features
-const onSubscriptionEvent = (event: NotificationEvent, handler: (sub: Subscription) => void) => {
-  subscriptionEventHandlers[event].push(handler)
-}
+// const onSubscriptionEvent = (event: NotificationEvent, handler: (sub: Subscription) => void) => {
+//   subscriptionEventHandlers[event].push(handler)
+// }
 
 const triggerSubscriptionEvent = (event: NotificationEvent, sub: Subscription) => {
   subscriptionEventHandlers[event].forEach((handler) => handler(sub))

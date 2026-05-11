@@ -1,6 +1,7 @@
 import express, { Router } from "express";
 import { Request, Response, NextFunction } from "express";
 import { User } from "../models/user";
+import { EmailService } from "../services/emailService";
 import { getSupportedCurrencies } from "../utils/currencies";
 import bcrypt from "bcrypt";
 
@@ -63,6 +64,7 @@ router.post(
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
+      const verificationToken = EmailService.generateVerificationToken();
 
       const newUser = new User({
         username,
@@ -71,28 +73,36 @@ router.post(
         role: "user",
         currency: "USD",
         country: "US",
+        emailVerified: false,
+        emailVerificationToken: verificationToken,
+        emailVerificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
       });
 
       await newUser.save();
 
-      req.session.userId = newUser._id;
+      // Send verification email
+      const emailSent = await EmailService.sendVerificationEmail(
+        email,
+        username,
+        verificationToken
+      );
 
-      req.session.cookie.maxAge = 1000 * 60 * 60 * 2;
+      if (!emailSent) {
+        console.error("Failed to send verification email");
+        // Don't fail registration if email fails, but log it
+      }
 
-      req.session.save((err) => {
-        if (err) return next(err);
-
-        return res.status(201).json({
-          message: "Registration successful",
-          user: {
-            id: newUser._id,
-            username: newUser.username,
-            email: newUser.email,
-            role: newUser.role,
-            currency: newUser.currency,
-            country: newUser.country,
-          },
-        });
+      return res.status(201).json({
+        message: "Registration successful. Please check your email to verify your account.",
+        user: {
+          id: newUser._id,
+          username: newUser.username,
+          email: newUser.email,
+          role: newUser.role,
+          currency: newUser.currency,
+          country: newUser.country,
+          emailVerified: newUser.emailVerified,
+        },
       });
     } catch (error) {
       next(error);
@@ -128,7 +138,10 @@ router.get("/me", async (req: Request, res: Response, next: NextFunction) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.status(200).json(user);
+    res.status(200).json({
+      ...user.toObject(),
+      emailVerified: user.emailVerified,
+    });
   } catch (error) {
     next(error);
   }
