@@ -23,6 +23,34 @@ router.get('/', isAuthenticated, async (req: any, res) => {
   }
 })
 
+// GET pending invites for current user
+router.get('/invites', isAuthenticated, async (req: any, res) => {
+  try {
+    const user = await require('../models/user').User.findById(req.session.userId)
+    if (!user) return res.status(404).json({ error: 'User not found' })
+
+    const invites = await Family.find({
+      'invites.email': user.email,
+      'invites.expiresAt': { $gt: new Date() }
+    })
+      .populate('ownerId', 'username email')
+      .select('name ownerId invites')
+      .lean()
+
+    // Filter invites to only show those for the current user
+    const userInvites = invites.map(family => ({
+      familyId: family._id,
+      familyName: family.name,
+      owner: family.ownerId,
+      invite: family.invites.find((inv: any) => inv.email === user.email)
+    }))
+
+    res.json(userInvites)
+  } catch {
+    res.status(500).json({ error: 'Failed to fetch invites' })
+  }
+})
+
 // GET single family
 router.get('/:id', isAuthenticated, async (req: any, res) => {
   try {
@@ -185,6 +213,30 @@ router.post('/invite/:code/accept', isAuthenticated, async (req: any, res) => {
     res.json(family)
   } catch {
     res.status(500).json({ error: 'Failed to accept invite' })
+  }
+})
+
+// DECLINE invite
+router.post('/invite/:code/decline', isAuthenticated, async (req: any, res) => {
+  try {
+    const family = await Family.findOne({
+      'invites.code': req.params.code,
+    })
+
+    if (!family) return res.status(404).json({ error: 'Invite not found' })
+
+    const inviteIndex = family.invites.findIndex((inv) => inv.code === req.params.code)
+
+    if (inviteIndex === -1) return res.status(404).json({ error: 'Invite not found' })
+
+    // Remove the invite
+    family.invites.splice(inviteIndex, 1)
+
+    await family.save()
+
+    res.json({ message: 'Invite declined' })
+  } catch {
+    res.status(500).json({ error: 'Failed to decline invite' })
   }
 })
 

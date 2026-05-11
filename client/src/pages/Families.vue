@@ -21,7 +21,19 @@ interface Family {
   }>
 }
 
+interface PendingInvite {
+  familyId: string
+  familyName: string
+  owner: { _id: string; username: string; email: string }
+  invite: {
+    email: string
+    code: string
+    expiresAt: string
+  }
+}
+
 const families = ref<Family[]>([])
+const pendingInvites = ref<PendingInvite[]>([])
 const showCreateModal = ref(false)
 const showInviteModal = ref(false)
 const selectedFamily = ref<Family | null>(null)
@@ -38,6 +50,15 @@ const fetchFamilies = async () => {
     families.value = res.data
   } catch (error) {
     console.error('Failed to fetch families:', error)
+  }
+}
+
+const fetchPendingInvites = async () => {
+  try {
+    const res = await api.get('/families/invites')
+    pendingInvites.value = res.data
+  } catch (error) {
+    console.error('Failed to fetch invites:', error)
   }
 }
 
@@ -79,20 +100,30 @@ const inviteToFamily = async () => {
   }
 }
 
-const acceptInvite = async () => {
-  if (!inviteCode.value.trim()) return
-
+const acceptInvite = async (inviteCode: string) => {
   try {
     loading.value = true
-    const res = await api.post(`/families/invite/${inviteCode.value}/accept`)
+    const res = await api.post(`/families/invite/${inviteCode}/accept`)
     families.value.push(res.data)
-    inviteCode.value = ''
-    showAcceptModal.value = false
     message.value = 'Invite accepted!'
-    await fetchFamilies()
+    await fetchPendingInvites()
   } catch (error) {
     console.error('Failed to accept invite:', error)
     message.value = 'Failed to accept invite'
+  } finally {
+    loading.value = false
+  }
+}
+
+const declineInvite = async (inviteCode: string) => {
+  try {
+    loading.value = true
+    await api.post(`/families/invite/${inviteCode}/decline`)
+    message.value = 'Invite declined'
+    await fetchPendingInvites()
+  } catch (error) {
+    console.error('Failed to decline invite:', error)
+    message.value = 'Failed to decline invite'
   } finally {
     loading.value = false
   }
@@ -139,6 +170,7 @@ const deleteFamily = async (familyId: string) => {
 
 onMounted(() => {
   fetchFamilies()
+  fetchPendingInvites()
 })
 </script>
 
@@ -172,6 +204,39 @@ onMounted(() => {
     <div v-if="message" class="mb-4 p-4 bg-blue-500/20 text-blue-400 rounded-lg">
       {{ message }}
       <button @click="message = ''" class="float-right text-xl">×</button>
+    </div>
+
+    <!-- Pending Invites -->
+    <div v-if="pendingInvites.length > 0" class="mb-8">
+      <h2 class="text-2xl sm:text-3xl font-bold mb-4">Pending Invites</h2>
+      <div class="space-y-4">
+        <div v-for="invite in pendingInvites" :key="invite.invite.code" class="bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-xl p-4 sm:p-6">
+          <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
+            <div class="flex-grow">
+              <h3 class="text-lg sm:text-xl font-semibold text-white">{{ invite.familyName }}</h3>
+              <p class="text-gray-300 text-sm sm:text-base mt-1">Invited by {{ invite.owner.username }}</p>
+              <p class="text-gray-400 text-xs sm:text-sm mt-2">Expires: {{ new Date(invite.invite.expiresAt).toLocaleDateString() }}</p>
+            </div>
+
+            <div class="flex gap-2 w-full sm:w-auto flex-col sm:flex-row">
+              <button
+                @click="acceptInvite(invite.invite.code)"
+                :disabled="loading"
+                class="px-4 sm:px-6 py-2 bg-green-600 hover:bg-green-700 transition rounded-lg font-medium text-sm sm:text-base disabled:opacity-50 w-full sm:w-auto"
+              >
+                Accept
+              </button>
+              <button
+                @click="declineInvite(invite.invite.code)"
+                :disabled="loading"
+                class="px-4 sm:px-6 py-2 bg-red-600 hover:bg-red-700 transition rounded-lg font-medium text-sm sm:text-base disabled:opacity-50 w-full sm:w-auto"
+              >
+                Decline
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Families List -->
