@@ -100,11 +100,16 @@ const inviteToFamily = async () => {
   }
 }
 
-const acceptInvite = async (inviteCode: string) => {
+const acceptInvite = async (code?: string) => {
+  const inviteCodeToUse = typeof code === 'string' ? code : inviteCode.value
+  if (!inviteCodeToUse?.trim()) return
+
   try {
     loading.value = true
-    const res = await api.post(`/families/invite/${inviteCode}/accept`)
+    const res = await api.post(`/families/invite/${inviteCodeToUse.trim()}/accept`)
     families.value.push(res.data)
+    inviteCode.value = ''
+    showAcceptModal.value = false
     message.value = 'Invite accepted!'
     await fetchPendingInvites()
   } catch (error) {
@@ -220,14 +225,14 @@ onMounted(() => {
 
             <div class="flex gap-2 w-full sm:w-auto flex-col sm:flex-row">
               <button
-                @click="acceptInvite(invite.invite.code)"
+                @click="() => acceptInvite(invite.invite.code)"
                 :disabled="loading"
                 class="px-4 sm:px-6 py-2 bg-green-600 hover:bg-green-700 transition rounded-lg font-medium text-sm sm:text-base disabled:opacity-50 w-full sm:w-auto"
               >
                 Accept
               </button>
               <button
-                @click="declineInvite(invite.invite.code)"
+                @click="() => declineInvite(invite.invite.code)"
                 :disabled="loading"
                 class="px-4 sm:px-6 py-2 bg-red-600 hover:bg-red-700 transition rounded-lg font-medium text-sm sm:text-base disabled:opacity-50 w-full sm:w-auto"
               >
@@ -396,7 +401,7 @@ onMounted(() => {
             Cancel
           </button>
           <button
-            @click="acceptInvite"
+            @click="() => acceptInvite()"
             :disabled="loading"
             class="px-4 py-2 bg-green-600 rounded hover:bg-green-700 transition disabled:opacity-50"
           >

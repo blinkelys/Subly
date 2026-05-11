@@ -6,6 +6,11 @@ import Family from '../models/Family'
 
 const router = Router()
 
+const getUserFamilyIds = async (userId: any) => {
+  const families = await Family.find({ 'members.userId': userId }).select('_id').lean()
+  return families.map((family) => family._id)
+}
+
 // GET all subscriptions
 router.get('/', isAuthenticated, async (req: any, res) => {
   try {
@@ -14,14 +19,25 @@ router.get('/', isAuthenticated, async (req: any, res) => {
     let query: any = {}
 
     if (familyId) {
-      // Get family subscriptions
+      const family = await Family.findOne({
+        _id: familyId,
+        'members.userId': req.session.userId,
+      })
+
+      if (!family) return res.status(403).json({ error: 'Not a member of this family' })
+
       query.familyId = familyId
     } else {
-      // Get personal subscriptions
-      query.userId = req.session.userId
+      const familyIds = await getUserFamilyIds(req.session.userId)
+      query = {
+        $or: [
+          { userId: req.session.userId },
+          { familyId: { $in: familyIds } },
+        ],
+      }
     }
 
-    const subs = await Subscription.find(query).sort({ createdAt: -1 })
+    const subs = await Subscription.find(query).populate('familyId', 'name').sort({ createdAt: -1 })
 
     res.json(subs)
   } catch {
@@ -43,7 +59,6 @@ router.post('/', isAuthenticated, async (req: any, res) => {
     }
 
     if (familyId) {
-      // Check if user is a member of this family
       const family = await Family.findOne({
         _id: familyId,
         'members.userId': req.session.userId,
@@ -57,8 +72,9 @@ router.post('/', isAuthenticated, async (req: any, res) => {
     }
 
     const sub = await Subscription.create(subscriptionData)
+    const populatedSub = await Subscription.findById(sub._id).populate('familyId', 'name')
 
-    res.status(201).json(sub)
+    res.status(201).json(populatedSub)
   } catch {
     res.status(500).json({ error: 'Failed to create subscription' })
   }
@@ -67,10 +83,15 @@ router.post('/', isAuthenticated, async (req: any, res) => {
 // UPDATE subscription
 router.put('/:id', isAuthenticated, async (req: any, res) => {
   try {
+    const familyIds = await getUserFamilyIds(req.session.userId)
+
     const updated = await Subscription.findOneAndUpdate(
       {
         _id: req.params.id,
-        userId: req.session.userId,
+        $or: [
+          { userId: req.session.userId },
+          { familyId: { $in: familyIds } },
+        ],
       },
       {
         name: req.body.name,
@@ -80,7 +101,7 @@ router.put('/:id', isAuthenticated, async (req: any, res) => {
         status: req.body.status,
       },
       { new: true }
-    )
+    ).populate('familyId', 'name')
 
     if (!updated) return res.status(404).json({ error: 'Not found' })
 
@@ -96,20 +117,27 @@ router.put('/:id', isAuthenticated, async (req: any, res) => {
 // END subscription (flag as ending and calculate scheduled end date)
 router.patch('/:id/end', isAuthenticated, async (req: any, res) => {
   try {
+    const familyIds = await getUserFamilyIds(req.session.userId)
+
     const sub = await Subscription.findOne({
       _id: req.params.id,
-      userId: req.session.userId,
+      $or: [
+        { userId: req.session.userId },
+        { familyId: { $in: familyIds } },
+      ],
     })
 
     if (!sub) return res.status(404).json({ error: 'Not found' })
 
-    // Calculate when this subscription will actually end (next payment date)
     const scheduledEndDate = getNextPaymentDate(sub.paymentDay)
 
     const updated = await Subscription.findOneAndUpdate(
       {
         _id: req.params.id,
-        userId: req.session.userId,
+        $or: [
+          { userId: req.session.userId },
+          { familyId: { $in: familyIds } },
+        ],
       },
       {
         status: 'ending',
@@ -127,11 +155,16 @@ router.patch('/:id/end', isAuthenticated, async (req: any, res) => {
 // MARK as ended (transition from ending to ended when scheduled end date arrives)
 router.patch('/:id/mark-ended', isAuthenticated, async (req: any, res) => {
   try {
+    const familyIds = await getUserFamilyIds(req.session.userId)
+
     const updated = await Subscription.findOneAndUpdate(
       {
         _id: req.params.id,
-        userId: req.session.userId,
         status: 'ending',
+        $or: [
+          { userId: req.session.userId },
+          { familyId: { $in: familyIds } },
+        ],
       },
       { status: 'ended' },
       { new: true }

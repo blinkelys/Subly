@@ -30,6 +30,12 @@ type Subscription = {
   category: string
   status: 'active' | 'ending' | 'ended'
   scheduledEndDate?: string // When subscription will actually end
+  familyId?: string | { _id: string; name: string }
+}
+
+type FamilySummary = {
+  _id: string
+  name: string
 }
 
 const CATEGORIES = [
@@ -46,6 +52,7 @@ const CATEGORIES = [
 ]
 
 const subscriptions = ref<Subscription[]>([])
+const families = ref<FamilySummary[]>([])
 const isLoadingRates = ref(false)
 const convertedPrices = ref<Record<string, number>>({})
 const selectedCategory = ref<string>('All')
@@ -65,6 +72,7 @@ const form = ref<Subscription>({
   paymentDay: 1,
   category: 'Other',
   status: 'active',
+  familyId: '',
 })
 
 /* --------- Computed Properties --------- */
@@ -292,6 +300,19 @@ const fetchSubscriptions = async () => {
   }
 }
 
+const fetchFamilies = async () => {
+  try {
+    const res = await api.get('/families')
+    families.value = res.data.map((family: any) => ({
+      _id: family._id,
+      name: family.name,
+    }))
+  } catch (error) {
+    console.error('Failed to fetch families:', error)
+    families.value = []
+  }
+}
+
 const convertPrices = async () => {
   isLoadingRates.value = true
   try {
@@ -316,7 +337,12 @@ const getDisplayPrice = (subscription: Subscription): string => {
 }
 
 const createSubscription = async () => {
-  await api.post('/subscriptions', form.value)
+  const payload = {
+    ...form.value,
+    familyId: typeof form.value.familyId === 'object' ? form.value.familyId._id : form.value.familyId,
+  }
+  if (!payload.familyId) delete payload.familyId
+  await api.post('/subscriptions', payload)
   await fetchSubscriptions()
   await convertPrices()
   closeModals()
@@ -324,7 +350,12 @@ const createSubscription = async () => {
 
 const updateSubscription = async () => {
   if (!selected.value?._id) return
-  await api.put(`/subscriptions/${selected.value._id}`, form.value)
+  const payload = {
+    ...form.value,
+    familyId: typeof form.value.familyId === 'object' ? form.value.familyId._id : form.value.familyId,
+  }
+  if (!payload.familyId) delete payload.familyId
+  await api.put(`/subscriptions/${selected.value._id}`, payload)
   await fetchSubscriptions()
   await convertPrices()
   closeModals()
@@ -372,13 +403,13 @@ const checkSubscriptionEvents = () => {
 /* ---------------- UI actions ---------------- */
 
 const openCreate = () => {
-  form.value = { name: '', price: 0, paymentDay: 1, category: 'Other', status: 'active' }
+  form.value = { name: '', price: 0, paymentDay: 1, category: 'Other', status: 'active', familyId: '' }
   showCreateModal.value = true
 }
 
 const openEdit = (sub: Subscription) => {
   selected.value = sub
-  form.value = { ...sub }
+  form.value = { ...sub, familyId: sub.familyId || '' }
   showEditModal.value = true
 }
 
@@ -395,6 +426,7 @@ const closeModals = () => {
 }
 
 onMounted(async () => {
+  await fetchFamilies()
   await fetchSubscriptions()
   await convertPrices()
   await autoTransitionEndingToEnded()
@@ -564,6 +596,9 @@ onMounted(async () => {
                 <div class="flex-grow min-w-0">
                   <p class="font-medium truncate">{{ sub.name }}</p>
                   <p class="text-xs sm:text-sm text-gray-400">Renews on day {{ sub.paymentDay }} of each month</p>
+                  <p v-if="sub.familyId" class="text-xs text-blue-300 mt-1">
+                    Family: {{ typeof sub.familyId === 'object' ? sub.familyId.name : sub.familyId }}
+                  </p>
                 </div>
 
                 <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
@@ -626,6 +661,15 @@ onMounted(async () => {
             <select v-model="form.category" class="w-full p-2.5 bg-gray-800 border border-gray-700 rounded text-white focus:border-blue-500 outline-none">
               <option v-for="cat in CATEGORIES" :key="cat" :value="cat">{{ cat }}</option>
             </select>
+          </div>
+
+          <div>
+            <label class="block text-sm text-gray-400 mb-1">Attach to</label>
+            <select v-model="form.familyId" class="w-full p-2.5 bg-gray-800 border border-gray-700 rounded text-white focus:border-blue-500 outline-none">
+              <option value="">Personal subscription</option>
+              <option v-for="family in families" :key="family._id" :value="family._id">Family: {{ family.name }}</option>
+            </select>
+            <p class="text-xs text-gray-500 mt-1">Family subscriptions are shared with all family members.</p>
           </div>
         </div>
 
