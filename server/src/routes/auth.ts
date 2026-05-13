@@ -258,4 +258,79 @@ router.post(
 
 generateAdmin();
 
+router.post(
+  "/recover",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+
+      const user = await User.findOne({ email });
+      if (!user) {
+        // Don't reveal if email exists or not for security
+        return res.status(200).json({ message: "If an account with that email exists, a recovery email has been sent." });
+      }
+
+      const recoveryToken = EmailService.generateRecoveryToken();
+      user.passwordResetToken = recoveryToken;
+      user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+      await user.save();
+
+      const emailSent = await EmailService.sendPasswordRecoveryEmail(
+        email,
+        user.username,
+        recoveryToken
+      );
+
+      if (!emailSent) {
+        console.error("Failed to send recovery email");
+        // Still return success for security
+      }
+
+      res.status(200).json({ message: "If an account with that email exists, a recovery email has been sent." });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+router.post(
+  "/reset-password",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { token, password } = req.body;
+
+      if (!token || !password) {
+        return res.status(400).json({ message: "Token and password are required" });
+      }
+
+      if (password.length < 8) {
+        return res.status(400).json({ message: "Password must be at least 8 characters long" });
+      }
+
+      const user = await User.findOne({
+        passwordResetToken: token,
+        passwordResetExpires: { $gt: new Date() }
+      });
+
+      if (!user) {
+        return res.status(400).json({ message: "Invalid or expired token" });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      user.password = hashedPassword;
+      user.passwordResetToken = undefined;
+      user.passwordResetExpires = undefined;
+      await user.save();
+
+      res.status(200).json({ message: "Password reset successfully" });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 export default router;

@@ -19,7 +19,7 @@ export interface EmailOptions {
 }
 
 export class EmailService {
-  private static from = 'Subly <noreply@subly.app>';
+  private static from = 'Subly <onboarding@resend.dev>';
 
   static async sendEmail(options: EmailOptions): Promise<boolean> {
     if (!resend) {

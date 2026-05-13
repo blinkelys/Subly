@@ -7,6 +7,7 @@ import Recover from './pages/auth/Recover.vue'
 import Dashboard from './pages/Dashboard.vue'
 import Settings from './pages/Settings.vue'
 import Families from './pages/Families.vue'
+import Admin from './pages/Admin.vue'
 import PrivacyPolicy from './pages/PrivacyPolicy.vue'
 import TermsOfService from './pages/TermsOfService.vue'
 import api from "./api";
@@ -19,6 +20,7 @@ const routes = [
   { path: '/recover', component: Recover },
   { path: '/dashboard', component: Dashboard, meta: { requiresAuth: true }, },
   { path: '/families', component: Families, meta: { requiresAuth: true }, },
+  { path: '/admin', component: Admin, meta: { requiresAuth: true, requiresAdmin: true }, },
   { path: '/settings', component: Settings, meta: { requiresAuth: true }, },
   { path: '/privacy-policy', component: PrivacyPolicy },
   { path: '/terms-of-service', component: TermsOfService },
@@ -33,7 +35,13 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   if (to.meta.requiresAuth) {
     try {
-      await api.get("/auth/me");
+      const response = await api.get("/auth/me");
+      const user = response.data;
+
+      if (to.meta.requiresAdmin && user.role !== 'admin') {
+        return "/dashboard"; // Redirect non-admins to dashboard
+      }
+
       return true;
     } catch (error) {
       return "/login";

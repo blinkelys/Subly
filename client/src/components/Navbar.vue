@@ -87,6 +87,13 @@ const logout = async () => {
           Families
         </RouterLink>
         <RouterLink
+          v-if="currentUser?.role === 'admin'"
+          to="/admin"
+          class="text-red-400 hover:text-red-300 transition-colors duration-200"
+        >
+          Admin
+        </RouterLink>
+        <RouterLink
           to="/settings"
           class="text-gray-400 hover:text-white transition-colors duration-200"
         >
@@ -182,6 +189,14 @@ const logout = async () => {
             @click="isMenuOpen = false"
           >
             Families
+          </RouterLink>
+          <RouterLink
+            v-if="currentUser?.role === 'admin'"
+            to="/admin"
+            class="block text-red-400 hover:text-red-300 transition-colors duration-200"
+            @click="isMenuOpen = false"
+          >
+            Admin
           </RouterLink>
           <RouterLink
             to="/settings"
