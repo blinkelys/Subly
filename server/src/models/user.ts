@@ -8,7 +8,7 @@ export interface IUser extends Document {
   currency: string; // e.g., "USD", "EUR", "GBP"
   country: string; // e.g., "US", "DE", "GB"
   emailVerified: boolean;
-  emailVerificationToken?: string;
+  emailVerificationCode?: string;
   emailVerificationExpires?: Date;
   passwordResetToken?: string;
   passwordResetExpires?: Date;
@@ -56,7 +56,7 @@ const userSchema = new Schema<IUser>(
       type: Boolean,
       default: false,
     },
-    emailVerificationToken: {
+    emailVerificationCode: {
       type: String,
     },
     emailVerificationExpires: {

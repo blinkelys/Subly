@@ -17,7 +17,7 @@ router.get("/users", async (req: Request, res: Response, next: NextFunction) => 
     const skip = (page - 1) * limit;
 
     const users = await User.find({})
-      .select("-password -passwordResetToken -passwordResetExpires -emailVerificationToken -emailVerificationExpires")
+      .select("-password -passwordResetToken -passwordResetExpires -emailVerificationCode -emailVerificationExpires")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -41,7 +41,7 @@ router.get("/users", async (req: Request, res: Response, next: NextFunction) => 
 // Get single user
 router.get("/users/:id", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const user = await User.findById(req.params.id).select("-password -passwordResetToken -passwordResetExpires -emailVerificationToken -emailVerificationExpires");
+    const user = await User.findById(req.params.id).select("-password -passwordResetToken -passwordResetExpires -emailVerificationCode -emailVerificationExpires");
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -67,7 +67,7 @@ router.put("/users/:id", async (req: Request, res: Response, next: NextFunction)
       req.params.id,
       { username, email, currency, country, role },
       { new: true }
-    ).select("-password -passwordResetToken -passwordResetExpires -emailVerificationToken -emailVerificationExpires");
+    ).select("-password -passwordResetToken -passwordResetExpires -emailVerificationCode -emailVerificationExpires");
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });

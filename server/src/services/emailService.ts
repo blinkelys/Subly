@@ -52,13 +52,15 @@ export class EmailService {
     return randomBytes(32).toString('hex');
   }
 
+  static generateVerificationCode(): string {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  }
+
   static generateRecoveryToken(): string {
     return randomBytes(32).toString('hex');
   }
 
-  static async sendVerificationEmail(email: string, username: string, token: string): Promise<boolean> {
-    const verificationUrl = `${process.env.HOST}/verify-email?token=${token}`;
-
+  static async sendVerificationEmail(email: string, username: string, code: string): Promise<boolean> {
     const html = `
       <!DOCTYPE html>
       <html>
@@ -69,7 +71,7 @@ export class EmailService {
             body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
             .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
             .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-            .button { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+            .code { display: inline-block; background: #667eea; color: white; padding: 15px 30px; font-size: 24px; font-weight: bold; letter-spacing: 3px; border-radius: 5px; margin: 20px 0; }
             .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
           </style>
         </head>
@@ -81,12 +83,10 @@ export class EmailService {
             <h2>Hi ${username},</h2>
             <p>Thank you for registering with Subly! To complete your registration and start managing your subscriptions, please verify your email address.</p>
 
-            <a href="${verificationUrl}" class="button">Verify Email Address</a>
+            <p>Enter this verification code in the app:</p>
+            <div class="code">${code}</div>
 
-            <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
-            <p><a href="${verificationUrl}">${verificationUrl}</a></p>
-
-            <p>This link will expire in 24 hours for security reasons.</p>
+            <p>This code will expire in 15 minutes for security reasons.</p>
 
             <p>If you didn't create an account with Subly, please ignore this email.</p>
           </div>

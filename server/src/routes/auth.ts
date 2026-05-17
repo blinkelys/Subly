@@ -64,7 +64,7 @@ router.post(
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
-      const verificationToken = EmailService.generateVerificationToken();
+      const verificationCode = Math.random().toString().slice(2, 8).padStart(6, '0'); // 6-digit code
 
       const newUser = new User({
         username,
@@ -74,17 +74,17 @@ router.post(
         currency: "USD",
         country: "US",
         emailVerified: false,
-        emailVerificationToken: verificationToken,
-        emailVerificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+        emailVerificationCode: verificationCode,
+        emailVerificationExpires: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
       });
 
       await newUser.save();
 
-      // Send verification email
+      // Send verification email with code
       const emailSent = await EmailService.sendVerificationEmail(
         email,
         username,
-        verificationToken
+        verificationCode
       );
 
       if (!emailSent) {
@@ -104,6 +104,38 @@ router.post(
           emailVerified: newUser.emailVerified,
         },
       });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+router.post(
+  "/verify-email",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { email, code } = req.body;
+
+      if (!email || !code) {
+        return res.status(400).json({ message: "Email and verification code are required" });
+      }
+
+      const user = await User.findOne({
+        email,
+        emailVerificationCode: code,
+        emailVerificationExpires: { $gt: new Date() }
+      });
+
+      if (!user) {
+        return res.status(400).json({ message: "Invalid or expired verification code" });
+      }
+
+      user.emailVerified = true;
+      user.emailVerificationCode = undefined;
+      user.emailVerificationExpires = undefined;
+      await user.save();
+
+      res.status(200).json({ message: "Email verified successfully" });
     } catch (error) {
       next(error);
     }
