@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useUser } from '../composables/useUser'
 import api from '../api'
 import { getSupportedCurrencies } from '../utils/currencies'
 
+const router = useRouter()
 const { currentUser, updateSettings } = useUser()
 
 const currencies = ref<any[]>([])
@@ -12,6 +14,12 @@ const selectedCountry = ref('')
 const isLoading = ref(false)
 const message = ref('')
 const messageType = ref<'' | 'success' | 'error'>('')
+
+// Delete account
+const showDeleteModal = ref(false)
+const deletePassword = ref('')
+const isDeleting = ref(false)
+const deleteError = ref('')
 
 onMounted(async () => {
   // Fetch supported currencies
@@ -56,7 +64,44 @@ const handleSave = async () => {
   }
 }
 
-// Get unique countries from currencies
+const openDeleteModal = () => {
+  deletePassword.value = ''
+  deleteError.value = ''
+  showDeleteModal.value = true
+}
+
+const closeDeleteModal = () => {
+  showDeleteModal.value = false
+  deletePassword.value = ''
+  deleteError.value = ''
+}
+
+const confirmDeleteAccount = async () => {
+  if (!deletePassword.value) {
+    deleteError.value = 'Password is required'
+    return
+  }
+
+  isDeleting.value = true
+  deleteError.value = ''
+
+  try {
+    await api.delete('/auth/account', {
+      data: {
+        password: deletePassword.value
+      }
+    })
+
+    // Account deleted successfully, redirect to login
+    setTimeout(() => {
+      router.push('/login')
+    }, 1000)
+  } catch (error: any) {
+    deleteError.value = error.response?.data?.message || 'Failed to delete account'
+  } finally {
+    isDeleting.value = false
+  }
+}
 const getCountries = () => {
   const countries = new Set(currencies.value.map((c) => c.country))
   return Array.from(countries).sort()
@@ -147,6 +192,72 @@ const getCurrenciesForCountry = () => {
         >
           {{ isLoading ? 'Saving...' : 'Save Settings' }}
         </button>
+      </div>
+
+      <!-- Danger Zone -->
+      <div class="bg-red-950/20 border border-red-500/30 rounded-xl p-6 space-y-4 mt-8">
+        <div class="flex items-start gap-3">
+          <div class="flex-1">
+            <h2 class="text-lg sm:text-xl font-bold text-red-400 mb-1">Delete Account</h2>
+            <p class="text-sm text-gray-400">
+              Permanently delete your account and all associated data. This action cannot be undone.
+            </p>
+          </div>
+        </div>
+
+        <button
+          @click="openDeleteModal"
+          class="w-full px-4 py-2 text-sm sm:text-base bg-red-600 hover:bg-red-700 rounded transition font-medium text-white"
+        >
+          Delete Account
+        </button>
+      </div>
+
+      <!-- Delete Account Modal -->
+      <div
+        v-if="showDeleteModal"
+        class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+        @click.self="closeDeleteModal"
+      >
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 max-w-sm w-full space-y-4">
+          <div>
+            <h3 class="text-xl font-bold text-red-400 mb-2">Delete Account</h3>
+            <p class="text-sm text-gray-400">
+              This will permanently delete your account and all your data. This action cannot be undone.
+            </p>
+          </div>
+
+          <div v-if="deleteError" class="p-3 rounded bg-red-500/20 border border-red-500/40 text-red-400 text-sm">
+            {{ deleteError }}
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold mb-2">Confirm your password</label>
+            <input
+              v-model="deletePassword"
+              type="password"
+              placeholder="Enter your password"
+              class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white placeholder-gray-500 focus:outline-none focus:border-red-500"
+              @keyup.enter="confirmDeleteAccount"
+            />
+          </div>
+
+          <div class="flex gap-3 pt-4">
+            <button
+              @click="closeDeleteModal"
+              class="flex-1 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded transition font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              @click="confirmDeleteAccount"
+              :disabled="isDeleting"
+              class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 rounded transition font-medium"
+            >
+              {{ isDeleting ? 'Deleting...' : 'Delete' }}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>

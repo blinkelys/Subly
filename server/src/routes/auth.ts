@@ -365,4 +365,48 @@ router.post(
   }
 );
 
+// Delete account
+router.delete(
+  "/account",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = (req as any).session?.userId;
+      const { password } = req.body;
+
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      if (!password) {
+        return res.status(400).json({ message: "Password is required" });
+      }
+
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Verify password for security
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        return res.status(401).json({ message: "Invalid password" });
+      }
+
+      // Delete user account
+      await User.findByIdAndDelete(userId);
+
+      // Destroy session
+      (req as any).session.destroy((err: any) => {
+        if (err) {
+          console.error("Failed to destroy session:", err);
+        }
+      });
+
+      res.status(200).json({ message: "Account deleted successfully" });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 export default router;
