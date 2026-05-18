@@ -1,4 +1,27 @@
 services:
+
+  client:
+    build: ./client
+    container_name: subly-client
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    networks:
+      - subly-network
+
+  server:
+    build: ./server
+    container_name: subly-server
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./server/.env
+    depends_on:
+      - mongodb
+    networks:
+      - subly-network
+
   mongodb:
     image: mongo:7.0
     container_name: subly-mongodb
