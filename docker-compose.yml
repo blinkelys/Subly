@@ -1,11 +1,22 @@
 services:
-
   client:
     build: ./client
     container_name: subly-client
     restart: unless-stopped
+    networks:
+      - subly-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: subly-nginx
+    restart: unless-stopped
     ports:
-      - "5173:5173"
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - client
+      - server
     networks:
       - subly-network
 
@@ -13,8 +24,6 @@ services:
     build: ./server
     container_name: subly-server
     restart: unless-stopped
-    ports:
-      - "5000:5000"
     env_file:
       - ./server/.env
     depends_on:
@@ -30,18 +39,11 @@ services:
       MONGO_INITDB_ROOT_USERNAME: subly
       MONGO_INITDB_ROOT_PASSWORD: subly
       MONGO_INITDB_DATABASE: subly
-    ports:
-      - "27017:27017"
     volumes:
       - mongodb_data:/data/db
       - mongodb_config:/data/configdb
     networks:
       - subly-network
-    healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
 volumes:
   mongodb_data:
