@@ -32,7 +32,7 @@ services:
       - subly-network
 
   mongodb:
-    image: mongo:7.0
+    image: mongo:4.4
     container_name: subly-mongodb
     restart: unless-stopped
     environment:
